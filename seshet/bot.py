@@ -1,18 +1,18 @@
-"""Implement SeshetBot as subclass of ircutils.bot.SimpleBot."""
+"""Implement SeshetBot as subclass of ircutils3.bot.SimpleBot."""
 
 import os
 import sys
 import traceback
 from io import StringIO
 
-from ircutils import bot, client
+from ircutils3 import bot, client
 
 from . import core
 from .utils import KVStore, Storage
 
 
 class SeshetBot(bot.SimpleBot):
-    """Extend `ircutils.bot.SimpleBot`.
+    """Extend `ircutils3.bot.SimpleBot`.
     
     Each instance represents one bot, connected to one IRC network.
     Each instance should have its own database, but can make use of
@@ -25,7 +25,7 @@ class SeshetBot(bot.SimpleBot):
     """Shared runtime storage available for all command modules."""
     
     def __init__(self, *args, **kwargs):
-        """Extend `ircutils.bot.SimpleBot.__init__()`.
+        """Extend `ircutils3.bot.SimpleBot.__init__()`.
         
         Keyword argument `db` is required for running commands other
         than core commands and should be an instance of pydal.DAL.
