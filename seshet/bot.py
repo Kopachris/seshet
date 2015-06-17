@@ -28,7 +28,7 @@ class SeshetBot(bot.SimpleBot):
         """Extend `ircutils.bot.SimpleBot.__init__()`.
         
         Keyword argument `db` is required for running commands other
-        than core commands, and should be an instance of pydal.DAL.
+        than core commands and should be an instance of pydal.DAL.
         """
         
         bot.SimpleBot.__init__(self, *args, **kwargs)
