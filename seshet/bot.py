@@ -4,6 +4,7 @@ import os
 import sys
 import traceback
 from io import StringIO
+from datetime import datetime
 
 from ircutils3 import bot, client
 
@@ -44,8 +45,41 @@ class SeshetBot(bot.SimpleBot):
         # our own on_quit() handler removes users after logging their disconnect
         self.events['quit'].remove_handler(client._remove_channel_user_on_quit)
         
+    def log(self, etype, source, msg='', target='', hostmask='', parms=''):
+        """Log an event in the database.
+        
+        Required:
+            `etype` - event type. One of 'PRIVMSG', 'QUIT', 'PART', 'ACTION',
+                'NICK', 'JOIN', 'MODE', 'KICK', 'CTCP', or 'ERROR'. Enforced 
+                by database model.
+            `source` - source of the event. Usually a user. For NICK events,
+                the user's original nickname. For ERROR events, this should be
+                the exception name, the module name, and the line number. The
+                full traceback will be logged in `msg`.
+        Optional:
+            `msg` - a message associated with the event.
+            `target` - the target the message was directed to. For MODE and KICK
+                events, this will be the user the event was performed on. For
+                NICK events, this will be channel the event was seen in (an event
+                will be created for each channel the user is seen by the bot in).
+            `hostmask` - a hostmask associated with the event.
+            `parms` - any additional parameters associated with the event, such as
+                a new nickname (for NICK events), mode switches (for MODE events),
+                or a dump of local variables (for ERROR events).
+        """
+        
+        self.db.event_log.insert(event_type=etype,
+                                 event_time=datetime.today(),
+                                 source=source,
+                                 target=target,
+                                 message=msg,
+                                 host=hostmask,
+                                 parms=parms,
+                                 )
+        self.db.commit()
+        
     def _log_to_file(self, *args, **kwargs):
-        """Override `_log()` if bot is not initialized with a database
+        """Override `log()` if bot is not initialized with a database
         connection. Do not call this method directly.
         """
         pass
