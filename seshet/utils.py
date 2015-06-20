@@ -1,14 +1,25 @@
 """Various utility classes used by the bot and command modules."""
 
 class KVStore:
-    """
-    Settings object abstracts key/value database table, mainly used for
-    persistent settings.  Can be used similarly to gluon Storage objects.
-    Only one settings object needs to be used, and should be stored in the
-    bot instance when the bot is running.  When modules are installed, they
-    will be registered with the Settings object so that namespaces may be
-    enforced.  Each module gets its own k/v table, and the Settings object
-    will determine which table to use based on the module's name.
+    """Create a key/value store in the bot's database for each
+    command module to use for persistent storage. Can be accessed
+    either like a class:
+    
+        >>> store = KVStore(db)
+        >>> store.foo = 'bar'
+        >>> store.foo
+        bar
+        
+    Or like a dict:
+    
+        >>> store[spam] = 'eggs'
+        >>> store[spam]
+        eggs
+        
+    The KVStore object uses `inspect` to determine which module
+    the object is being accessed from and will automatically create
+    a database table as needed or determine which one to use if it
+    already exists.
     """
 
     def __init__(self, db):
