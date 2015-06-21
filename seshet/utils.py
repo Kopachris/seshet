@@ -5,6 +5,10 @@
     License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
 """
 
+import random
+import inspect
+
+
 class Storage(dict):
     """A Storage object is like a dictionary except `obj.foo` can be used
     in addition to `obj['foo']`, and setting obj.foo = None deletes item foo.
@@ -123,133 +127,89 @@ class KVStore:
         >>> store = KVStore(db)
         >>> store.foo = 'bar'
         >>> store.foo
-        bar
+        'bar'
         
     Or like a dict:
     
         >>> store[spam] = 'eggs'
         >>> store[spam]
-        eggs
+        'eggs'
         
     The KVStore object uses `inspect` to determine which module
     the object is being accessed from and will automatically create
     a database table as needed or determine which one to use if it
-    already exists.
+    already exists, so that each module the object is used from has
+    its own namespace.
+    
+    KVStore has most of the same interfaces as an ordinary `dict`, but
+    is not a subclass of `dict` or `collections.UserDict` because
+    so many functions had to be completely rewritten to work with
+    KVStore's database model.
     """
 
     def __init__(self, db):
-        global _db_store
+        #make sure some tables are defined:
         
-        # store name of app these settings were set up in used later
-        # for defining safe directories in _get_calling_module()
-        #
-        # the file which starts the bot daemon will have to create a 
-        # new instance of Settings after injecting current.request.application
-        # into the module object: import bot_utils; bot_utils.current = Storage()
-        # etc.
-        self.__dict__['_app'] = current.request.application
-        
-        # define some tables
-        
-        if 'bot' not in db:
-            # general bot-wide settings
-            db.define_table('bot',
-                            Field('k', 'string', unique=True),
-                            Field('v', 'text'),
-                            Field('is_str', 'boolean'),
-                            )
         if 'modules' not in db:
-            # list of registered modules and their unique table names
-            db.define_table('modules',
-                            Field('name', 'string'),
-                            Field('uuid', 'string'),
-                            )
+            # list of registered modules
+            db.define_table('modules', Field('name'))
+            
         for m in db().select(db.modules.ALL):
             # these are modules' own "namespaces"
-            if m.uuid != m.name:
-                db.define_table(m.uuid,
+            if m.name not in db:
+                db.define_table(m.name,
                                 Field('k', 'string', unique=True),
                                 Field('v', 'text'),
-                                Field('is_str', 'boolean'),
                                 )
-        _db_store.db = db   # web2py DAL instance
-
+        
+        self._db = db   # pydal DAL instance
+        # It's recommended to use a separate database
+        # for the bot and for the KV store to avoid
+        # accidental or malicious name collisions
+        
     def __getattr__(self, k):
-        global _db_store
+        db = self._db
         
-        # get DAL object (db) and table name (tbl)
         tbl = self._get_calling_module()
-        if tbl is None:
-            # module not registered, not in safe dirs
-            # deny access
-            return None
-        if (k == '_Settings__db' or k == '__db') and tbl == 'bot':
-            return _db_store.db
-        
-        db = _db_store.db
         if tbl not in db:
-            # module hasn't tried to store anything,
             # table doesn't exist
             return None
         
         r = db(db[tbl].k == k)
         if r.isempty():
-            # key has not been set, follow behavior
-            # established by gluon.storage.Storage
-            # and return None
+            # no db entry for this key
             return None
         
         r = r.select().first()
-        if r.is_str:
-            # string literal, don't eval() because
-            # it won't have quotes
-            return r.v
-        else:
-            # other literal, eval() will return
-            # the proper type of object
-            return eval(r.v)
+        # v is always a literal, eval() will return
+        # the correct object type
+        return eval(r.v, {}, {})
 
     def __setattr__(self, k, v):
-        global _db_store
+        if k in self.__dict__:
+            # instance attributes should be read-only-ish
+            raise AttributeError("Name already in use: %s" % k)
+        
+        db = self._db
         
         tbl = self._get_calling_module()
-        if tbl is None:
-            # module not registered, not in safe dirs
-            # deny access
-            return None
-        db = _db_store.db
-        if (k == '_Settings__db' or k == '__db') and tbl == 'bot':
-            _db_store.db = v
-            return
-
-        # __getattr__ will normally eval() whatever's stored in
-        # the database entry so it can get int, list, etc. literals
-        # but we don't want to require quote marks for strings
-        #
-        # e.g.
-        # an int will be stored as 3
-        # a float will be stored as 3.14
-        # a list will be stored as [0, 1, 1, 2, 3, 5, 8]
-        # a tuple will be stored as ('spam and eggs', 'spam beans bacon and spam')
-        # a dict will be stored as {'1fish': 'red', '2fish': 'blue'}
-        # a string will be stored as foo bar baz bang spam eggs (without quotes)
-        
-        is_str = isinstance(v, str) or isinstance(v, unicode)
-        
-        if tbl in db:
+        if tbl not in db:
             if v is not None:
-                db[tbl].update_or_insert(db[tbl].k == k,
-                                         k=k, v=v, is_str=is_str)
+                # module not registered, need to create
+                # a new table
+                self._register_module(tbl, True)
+                db[tbl].insert(k=k, v=repr(v))
+            else:
+                # no need to delete a non-existent key
+                return None
+        else:
+            if v is not None:
+                db[tbl].update_or_insert(db[tbl].k == k, k=k, v=v)
             else:
                 db(db[tbl].k == k).delete()
-        elif v is not None:
-            # storage hasn't been allocated yet, need to register
-            # the module and receive a uuid
-            tbl = self.register_module(tbl, True)
-            db[tbl].insert(k=k, v=v, is_str=is_str)
-        else:
-            return None
-        _db_store.db = db
+        
+        db.commit()
+        self._db = db
     
     def __delattr__(self, k):
         self.__setattr__(k, None)
@@ -263,40 +223,26 @@ class KVStore:
     def __delitem__(self, k):
         self.__setattr__(k, None)
 
-    def register_module(self, name, create_table=False):
-        global _db_store
-        if name in ('modules', 'bot'):
-            # name collision with existing tables
+    def _register_module(self, name):
+        db = self._db
+        
+        if name == 'modules':
+            # name collision with existing table
             raise ValueError('The module name %s is reserved' % name)
-        db = _db_store.db
-        if create_table:
-           # only create a table if something will actually be stored
-           # usually called from self.__setattr__()
-           mod_uuid = name + uuid.uuid4().hex
-           # using uuid to obscure names a little
-           db.define_table(mod_uuid,
-                           Field('k', 'string', unique=True),
-                           Field('v', 'text'),
-                           Field('is_str', 'boolean'),
-                           )
-        else:
-           # not making table, use module's name as placeholder
-           # in __setattr__(), if module's name == its "uuid",
-           # call this function again with create_table=True
-           mod_uuid = name
-        #mod_uuid = name
-        db.modules.update_or_insert(db.modules.name == name, name=name, uuid=mod_uuid)
-        _db_store.db = db
-        return mod_uuid
+            
+        if db(db.modules.name == name).isempty():
+            db.modules.insert(name=name)
+            db.commit()
+        if name not in db:
+            db.define_table(name,
+                            Field('k', 'string', unique=True),
+                            Field('v', 'text'),
+                            )
+        self._db = db
 
     def _get_calling_module(self):
-        global _db_store
-        
         # in theory, bot modules will be registered with register_module
         # when they're uploaded and installed
-        # all other "modules" that can use this object will be models
-        # and controllers
-        # since they won't be registered, they'll use the table 'bot'
 
         curfrm = inspect.currentframe()
         for f in inspect.getouterframes(curfrm)[1:]:
@@ -304,65 +250,16 @@ class KVStore:
                 calling_file = f[1]
                 break
         caller_mod = inspect.getmodulename(calling_file)
-        #log = open('bot_access.log', 'a')
-        #log.write('%s:%s\n' % (self.__module__, caller_mod))
-        #log.close()
     
-        db = _db_store.db
-        try:
-            mod = db(db.modules.name == caller_mod)
-        except AttributeError:
-            # db doesn't exist yet, still in setup phase
-            #_db_store.db = list()
-            return 'bot'
+        db = self._db
+        mod = db(db.modules.name == caller_mod)
         if mod.isempty():
-            # calling module not registered, probably bot itself or
-            # web interface's models/controllers
-            # can verify better by initializing Settings with current.request
-            #return None
-            curapp = self._app
-            # safe_dirs = (['applications', curapp, 'controllers'],
-            #              ['applications', curapp, 'models'],
-            #              ['applications', curapp, 'private'],
-            #              )
-            safe_suf = ('controllers',
-                        'models',
-                        'private',
-                        'modules/bot_utils',
-                        'modules/prefs',
-                        )
-            safe_dirs = ['applications/' + curapp + '/' + d for d in safe_suf]
-            self.__dict__['_debug_calling_file'] = calling_file
-            #calling_file = calling_file.split('/')
-            safe = False
-            for d in safe_dirs:
-                if d in calling_file:
-                    safe = True
-                    break
-                
-            if safe:
-                return 'bot'
-            else:
-                # calling module not in safe directories, deny access
-                return None
+            return None
         else:
-            return mod.select().first().uuid
-        
-    def test(self):
-        curfrm = inspect.currentframe()
-        for f in inspect.getouterframes(curfrm)[1:]:
-            if self.__module__ not in f[1]:
-                calling_file = f[1]
-                break
-        caller_mod = inspect.getmodulename(calling_file)
-        curapp = self._app
-        db = _db_store.db
-        mod = db(db.modules.name == caller_mod).select().first()
-        empty = db(db.modules.name == caller_mod).isempty()
-        return locals()
+            return caller_mod
         
     def keys(self):
-        db = _db_store.db
+        db = self._db
         tbl = self._get_calling_module()
         if tbl is None or tbl not in db:
             return []
@@ -419,7 +316,7 @@ class KVStore:
         return v
     
     def popitem(self):
-        """Unlike dict.popitem(), this is actually random"""
+        """Unlike `dict.popitem()`, this is actually random"""
         all_items = self.items()
         removed_item = random.choice(all_items)
         self[removed_item[0]] = None
