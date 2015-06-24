@@ -22,7 +22,7 @@ class SeshetBot(bot.SimpleBot):
     `seshet --config` or `seshet --new` commands.
     """
     
-    storage = Storage()
+    session = Storage()
     """Shared runtime storage available for all command modules."""
     
     def __init__(self, *args, **kwargs):
@@ -78,6 +78,36 @@ class SeshetBot(bot.SimpleBot):
                                  )
         self.db.commit()
         
+    def on_message(self, event):
+        pass
+    
+    def on_join(self, event):
+        pass
+    
+    def on_part(self, event):
+        pass
+    
+    def on_quit(self, event):
+        pass
+    
+    def on_disconnect(self, event):
+        pass
+    
+    def on_kick(self, event):
+        pass
+    
+    def on_nick_change(self, event):
+        pass
+    
+    def on_ctcp_action(self, event):
+        pass
+    
+    def on_welcome(self, event):
+        pass
+    
+    def on_mode(self, event):
+        pass
+    
     def _log_to_file(self, *args, **kwargs):
         """Override `log()` if bot is not initialized with a database
         connection. Do not call this method directly.
