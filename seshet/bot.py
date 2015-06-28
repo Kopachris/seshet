@@ -127,7 +127,7 @@ class SeshetBot(bot.SimpleBot):
         """Override `log()` if bot is not initialized with a database
         connection. Do not call this method directly.
         """
-        pass
+        print(event.message)
     
     def _run_only_core(self, *args, **kwargs):
         """Override `_run_commands()` if bot is not initialized with a
