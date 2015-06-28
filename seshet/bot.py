@@ -43,8 +43,8 @@ class SeshetBot(bot.SimpleBot):
         if 'db' not in kwargs:
             # no database connection, only log to file and run
             # core command modules
-            self._log = self._log_to_file
-            self._run_commands = self._run_only_core
+            self.log = self._log_to_file
+            self.run_commands = self._run_only_core
             
             # dummy KV store since no db
             self.storage = Storage()
@@ -89,12 +89,12 @@ class SeshetBot(bot.SimpleBot):
         self.db.commit()
         
     def on_message(self, e):
-        self.log('PRIVMSG', e.source, e.target)
-        self._run_commands(e)
+        self.log('PRIVMSG', e.source, e.message, e.target)
+        self.run_commands(e)
     
     def on_join(self, e):
         self.log('JOIN', e.source, '', e.target, e.user+'@'+e.host)
-        self._run_commands(e)
+        self.run_commands(e)
     
     def on_part(self, e):
         pass
@@ -123,11 +123,14 @@ class SeshetBot(bot.SimpleBot):
     def _remove_user(self, e):
         pass
     
-    def _log_to_file(self, *args, **kwargs):
+    def _log_to_file(self, etype, source, msg='', target='', hostmask='', parms=''):
         """Override `log()` if bot is not initialized with a database
         connection. Do not call this method directly.
         """
-        print(event.message)
+        if etype == 'PRIVMSG':
+            log = open('seshet.log', 'r+')
+            log.write("<{}> {}\n".format(source, msg))
+            log.close()
     
     def _run_only_core(self, *args, **kwargs):
         """Override `_run_commands()` if bot is not initialized with a

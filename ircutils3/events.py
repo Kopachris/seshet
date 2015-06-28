@@ -143,9 +143,12 @@ class EventListener(object):
         use this method as handlers are automatically added.
                 
         """
-        handler_priorities = zip(*self.handlers)
-        ins_loc = bisect.bisect(handler_priorities, priority)
-        self.handlers.insert(ins_loc, (priority, handler))
+        if len(self.handlers) == 0:
+            self.handlers.append((priority, handler))
+        else:
+            handler_priorities = list(zip(*self.handlers))[0]
+            ins_loc = bisect.bisect(handler_priorities, priority)
+            self.handlers.insert(ins_loc, (priority, handler))
     
     def remove_handler(self, handler):
         """ This removes all handlers that are equal to the ``handler`` which
@@ -164,11 +167,12 @@ class EventListener(object):
         and the event.
         """
         for p, handler in self.handlers:
-            try:
-                handler(*args)
-            except Exception as ex:
-                traceback.print_exc(ex)
-                self.handlers.remove((p, handler))
+            handler(*args)
+            # try:
+            #     handler(*args)
+            # except Exception as ex:
+            #     #traceback.print_exc(ex)
+            #     self.handlers.remove((p, handler))
     
     def notify(self, client, event):
         """ This is to be overridden when subclassed. It gets called after each

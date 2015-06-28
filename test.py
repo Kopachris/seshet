@@ -6,5 +6,5 @@ bot = SeshetBot('SeshetBot')
 bot.user = 'SeshetBot'
 bot.real_name = 'SeshetBot'
 
-bot.connect('irc.ponychat.net', channel='#geek')
+bot.connect('irc.esper.net', channel='#hard-light')
 bot.start()
