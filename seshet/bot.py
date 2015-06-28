@@ -25,6 +25,12 @@ class SeshetBot(bot.SimpleBot):
     session = Storage()
     """Shared runtime storage available for all command modules."""
     
+    storage = None
+    """If bot is initialized with a database connection, persistent
+    KV store available for all command modules. Each module will have
+    its own namespace.
+    """
+    
     def __init__(self, *args, **kwargs):
         """Extend `ircutils3.bot.SimpleBot.__init__()`.
         
@@ -39,8 +45,12 @@ class SeshetBot(bot.SimpleBot):
             # core command modules
             self._log = self._log_to_file
             self._run_commands = self._run_only_core
+            
+            # dummy KV store since no db
+            self.storage = Storage()
         else:
             self.db = db
+            self.storage = KVStore(db)
         
         # our own on_quit() handler removes users after logging their disconnect
         self.events['quit'].remove_handler(client._remove_channel_user_on_quit)
@@ -78,34 +88,39 @@ class SeshetBot(bot.SimpleBot):
                                  )
         self.db.commit()
         
-    def on_message(self, event):
+    def on_message(self, e):
+        self.log('PRIVMSG', e.source, e.target)
+        self._run_commands(e)
+    
+    def on_join(self, e):
+        self.log('JOIN', e.source, '', e.target, e.user+'@'+e.host)
+        self._run_commands(e)
+    
+    def on_part(self, e):
         pass
     
-    def on_join(self, event):
+    def on_quit(self, e):
         pass
     
-    def on_part(self, event):
+    def on_disconnect(self, e):
         pass
     
-    def on_quit(self, event):
+    def on_kick(self, e):
         pass
     
-    def on_disconnect(self, event):
+    def on_nick_change(self, e):
         pass
     
-    def on_kick(self, event):
+    def on_ctcp_action(self, e):
         pass
     
-    def on_nick_change(self, event):
+    def on_welcome(self, e):
         pass
     
-    def on_ctcp_action(self, event):
+    def on_mode(self, e):
         pass
     
-    def on_welcome(self, event):
-        pass
-    
-    def on_mode(self, event):
+    def _remove_user(self, e):
         pass
     
     def _log_to_file(self, *args, **kwargs):

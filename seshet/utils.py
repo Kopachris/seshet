@@ -7,6 +7,7 @@
 
 import random
 import inspect
+import pickle
 
 
 class Storage(dict):
@@ -156,8 +157,9 @@ class KVStore:
             
         for m in db().select(db.modules.ALL):
             # these are modules' own "namespaces"
-            if m.name not in db:
-                db.define_table(m.name,
+            tbl_name = 'kv_' + m.name
+            if tbl_name not in db:
+                db.define_table(tbl_name,
                                 Field('k', 'string', unique=True),
                                 Field('v', 'text'),
                                 )
@@ -171,19 +173,20 @@ class KVStore:
         db = self._db
         
         tbl = self._get_calling_module()
-        if tbl not in db:
+        tbl_name = 'kv_' + tbl if table is not None else None
+        if tbl is None or tbl_name not in db:
             # table doesn't exist
             return None
         
-        r = db(db[tbl].k == k)
+        r = db(db[tbl_name].k == k)
         if r.isempty():
             # no db entry for this key
             return None
         
         r = r.select().first()
-        # v is always a literal, eval() will return
-        # the correct object type
-        return eval(r.v, {}, {})
+        
+        # db should return string, pickle expects bytes
+        return pickle.loads(r.v.encode(errors='ignore'))
 
     def __setattr__(self, k, v):
         if k in self.__dict__:
@@ -192,21 +195,26 @@ class KVStore:
         
         db = self._db
         
+        if v is not None:
+            v = pickle.dumps(v).decode(errors='ignore')
+        
         tbl = self._get_calling_module()
-        if tbl not in db:
+        tbl_name = 'kv_' + tbl if tbl is not None else None
+        
+        if tbl is None or tbl_name not in db:
             if v is not None:
                 # module not registered, need to create
                 # a new table
                 self._register_module(tbl, True)
-                db[tbl].insert(k=k, v=repr(v))
+                db[tbl_name].insert(k=k, v=repr(v))
             else:
                 # no need to delete a non-existent key
                 return None
         else:
             if v is not None:
-                db[tbl].update_or_insert(db[tbl].k == k, k=k, v=v)
+                db[tbl_name].update_or_insert(db[tbl_name].k == k, k=k, v=v)
             else:
-                db(db[tbl].k == k).delete()
+                db(db[tbl_name].k == k).delete()
         
         db.commit()
         self._db = db
@@ -226,15 +234,16 @@ class KVStore:
     def _register_module(self, name):
         db = self._db
         
-        if name == 'modules':
+        #if name == 'modules':
             # name collision with existing table
-            raise ValueError('The module name %s is reserved' % name)
+            #raise ValueError('The module name %s is reserved' % name)
+        tbl_name = 'kv_' + name
             
         if db(db.modules.name == name).isempty():
             db.modules.insert(name=name)
             db.commit()
-        if name not in db:
-            db.define_table(name,
+        if tbl_name not in db:
+            db.define_table(tbl_name,
                             Field('k', 'string', unique=True),
                             Field('v', 'text'),
                             )
@@ -261,9 +270,10 @@ class KVStore:
     def keys(self):
         db = self._db
         tbl = self._get_calling_module()
-        if tbl is None or tbl not in db:
+        tbl_name = 'kv_' + tbl if tbl is not None else None
+        if tbl is None or tbl_name not in db:
             return []
-        all_items = db().select(db[tbl].ALL)
+        all_items = db().select(db[tbl_name].ALL)
         all_keys = [r.k for r in all_items]
         return all_keys
     
