@@ -31,16 +31,16 @@ class SeshetBot(bot.SimpleBot):
     its own namespace.
     """
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, nick, db=None):
         """Extend `ircutils3.bot.SimpleBot.__init__()`.
         
         Keyword argument `db` is required for running commands other
         than core commands and should be an instance of pydal.DAL.
         """
         
-        bot.SimpleBot.__init__(self, *args, **kwargs)
+        bot.SimpleBot.__init__(self, nick)
         
-        if 'db' not in kwargs:
+        if db is None:
             # no database connection, only log to file and run
             # core command modules
             self.log = self._log_to_file
@@ -88,6 +88,9 @@ class SeshetBot(bot.SimpleBot):
                                  )
         self.db.commit()
         
+    def run_commands(self, e):
+        pass
+    
     def on_message(self, e):
         self.log('PRIVMSG', e.source, e.message, e.target)
         self.run_commands(e)

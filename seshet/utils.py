@@ -9,6 +9,8 @@ import random
 import inspect
 import pickle
 
+from pydal import Field
+
 
 class Storage(dict):
     """A Storage object is like a dictionary except `obj.foo` can be used
@@ -170,6 +172,9 @@ class KVStore:
         # accidental or malicious name collisions
         
     def __getattr__(self, k):
+        if k.startswith('_'):
+            return self.__dict__[k]
+        
         db = self._db
         
         tbl = self._get_calling_module()
@@ -189,7 +194,10 @@ class KVStore:
         return pickle.loads(r.v.encode(errors='ignore'))
 
     def __setattr__(self, k, v):
-        if k in self.__dict__:
+        if k.startswith('_'):
+            self.__dict__[k] = v
+            return
+        elif k in self.__dict__:
             # instance attributes should be read-only-ish
             raise AttributeError("Name already in use: %s" % k)
         
@@ -205,7 +213,7 @@ class KVStore:
             if v is not None:
                 # module not registered, need to create
                 # a new table
-                self._register_module(tbl, True)
+                self._register_module(tbl)
                 db[tbl_name].insert(k=k, v=repr(v))
             else:
                 # no need to delete a non-existent key
