@@ -151,7 +151,7 @@ class KVStore:
     """
 
     def __init__(self, db):
-        #make sure some tables are defined:
+        # make sure some tables are defined:
         
         if 'modules' not in db:
             # list of registered modules
@@ -170,6 +170,8 @@ class KVStore:
         # It's recommended to use a separate database
         # for the bot and for the KV store to avoid
         # accidental or malicious name collisions
+        #
+        # (Then why doesn't the default implimentation?)
         
     def __getattr__(self, k):
         if k.startswith('_'):
