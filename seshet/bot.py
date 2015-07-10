@@ -31,7 +31,7 @@ class SeshetBot(bot.SimpleBot):
     its own namespace.
     """
     
-    def __init__(self, nick=Seshet, db=None):
+    def __init__(self, nick='Seshet', db=None):
         """Extend `ircutils3.bot.SimpleBot.__init__()`.
         
         Keyword argument `db` is required for running commands other
