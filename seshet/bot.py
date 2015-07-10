@@ -31,7 +31,7 @@ class SeshetBot(bot.SimpleBot):
     its own namespace.
     """
     
-    def __init__(self, nick, db=None):
+    def __init__(self, nick=Seshet, db=None):
         """Extend `ircutils3.bot.SimpleBot.__init__()`.
         
         Keyword argument `db` is required for running commands other
@@ -121,7 +121,8 @@ class SeshetBot(bot.SimpleBot):
         pass
     
     def on_mode(self, e):
-        pass
+        # will be changed
+        self.log('MODE', e.source, str(e.params), e.target)
     
     def _remove_user(self, e):
         pass
@@ -131,8 +132,12 @@ class SeshetBot(bot.SimpleBot):
         connection. Do not call this method directly.
         """
         if etype == 'PRIVMSG':
-            log = open('seshet.log', 'r+')
+            log = open('seshet.log', 'a')
             log.write("<{}> {}\n".format(source, msg))
+            log.close()
+        elif etype == 'MODE':
+            log = open('seshet.log', 'a')
+            log.write("{} MODE {} {}\n".format(source, target, msg))
             log.close()
     
     def _run_only_core(self, *args, **kwargs):
