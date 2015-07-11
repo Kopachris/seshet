@@ -38,7 +38,7 @@ class SeshetBot(bot.SimpleBot):
         than core commands and should be an instance of pydal.DAL.
         """
         
-        bot.SimpleBot.__init__(self, nick)
+        bot.SimpleBot.__init__(self, nick, auto_handle=False)
         
         if db is None:
             # no database connection, only log to file and run
@@ -52,8 +52,9 @@ class SeshetBot(bot.SimpleBot):
             self.db = db
             self.storage = KVStore(db)
         
-        # our own on_quit() handler removes users after logging their disconnect
-        self.events['quit'].remove_handler(client._remove_channel_user_on_quit)
+        # Add default handlers
+        self.events["any"].add_handler(client._update_client_info)
+        self.events["ctcp_version"].add_handler(client._reply_to_ctcp_version)
         
     def log(self, etype, source, msg='', target='', hostmask='', parms=''):
         """Log an event in the database.
