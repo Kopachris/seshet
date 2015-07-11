@@ -124,6 +124,19 @@ class SeshetBot(bot.SimpleBot):
         # will be changed
         self.log('MODE', e.source, str(e.params), e.target)
     
+    def before_poll(self):
+        """Called each loop before polling sockets for I/O."""
+        pass
+    
+    def after_poll(self):
+        """Called each loop after polling sockets for I/O and
+        handling any queued events.
+        """
+        pass
+    
+    def start(self):
+        self._loop(self.conn._map)
+    
     def _remove_user(self, e):
         pass
     
@@ -156,3 +169,17 @@ class SeshetBot(bot.SimpleBot):
         module is entered into the database.
         """
         pass
+
+    def _loop(self, map):
+        """The main loop. Poll sockets for I/O and run any other functions
+        that need to be run every loop.
+        """
+        try:
+            from asyncore import poll
+        except ImportError:
+            raise Exception("Couldn't find poll function. Cannot start bot.")
+    
+        while map:
+            self.before_poll()
+            poll(timeout=30.0, map=map)
+            self.after_poll()
