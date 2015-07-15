@@ -8,7 +8,6 @@ from datetime import datetime
 
 from ircutils3 import bot, client
 
-from . import core
 from .utils import KVStore, Storage
 
 
