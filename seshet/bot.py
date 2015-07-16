@@ -139,7 +139,7 @@ class SeshetBot(bot.SimpleBot):
         defaults = {}
 
         for i, k in enumerate(('host', 'port', 'channel', 'use_ssl', 'password')):
-            if len(args) < i:
+            if i < len(args):
                 defaults[k] = args[i]
             elif k in kwargs:
                 defaults[k] = kwargs[k]

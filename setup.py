@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
+
 """Seshet - Modular, dynamic IRC bot"""
 
 from setuptools import setup
+from os import path
 
 
 long_description = open(
