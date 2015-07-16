@@ -120,16 +120,47 @@ def build_db_tables(db):
                     )
         
 
-def build_bot(config=None, config_file=None):
-    """Parse a config and return a SeshetBot instance.
+def build_bot(config_file=None):
+    """Parse a config and return a SeshetBot instance. After, the bot can be run
+    simply by calling .connect() and then .start()
     
     Optional arguments:
-        config - ConfigParser, dict, or str instance
-        config_file - valid file path
+        config_file - valid file path or ConfigParser instance
         
-        If config is present, it will take precedence over config_file.
-        If using config_file, will attempt to read the configuration from
-        the specified file using ConfigParser. If neither are used, will
-        apply default configuration defined in this module.
+        If config_file is None, will read default config defined in this module.
     """
-    pass
+    from . import bot
+
+    config = ConfigParser()
+    if config_file is None:
+        config.read_string(default_config)
+    elif isinstance(config_file, ConfigParser):
+        config = config_file
+    else:
+        config.read(config_file)
+
+    # shorter names
+    db_conf = config['database']
+    conn_conf = config['connection']
+    client_conf = config['client']
+    # add more as they're used
+
+    if db_conf.getboolean('use_db'):
+        db = DAL(db_conf['db_string'])
+        build_db_tables(db)
+    else:
+        db = None
+
+    seshetbot = bot.SeshetBot(client_conf['nickname'], db)
+
+    # connection info for connect()
+    seshetbot.default_host = conn_conf['server']
+    seshetbot.default_port = int(conn_conf['port'])
+    seshetbot.default_channel = conn_conf['channels'].split(',')
+    seshetbot.default_use_ssl = conn_conf.getboolean('ssl')
+
+    # client info
+    seshetbot.user = client_conf['user']
+    seshetbot.real_name = client_conf['realname']
+
+    return seshetbot
