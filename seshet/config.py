@@ -46,9 +46,18 @@ db_string: sqlite://seshet.db
 [logging]
 # if using db, this will be ignored
 file: logs/%(target)s_%(date)s.log
+privmsg: [{time}] <{source}> {msg}
+join: [{time}] -- {source} ({hostmask}) has joined
+part: [{time}] -- {source} ({hostmask}) has left ({msg})
+quit: [{time}] -- {source} ({hostmask}) has quit ({msg})
+kick: [{time}] -- {target} ({hostmask}) has been kicked by {source} ({msg})
+mode: [{time}] -- {source} ({hostmask}) has set mode {parms} on {target}
+nick: [{time}] -- {source} is now known as {parms}
+action: [{time}] * {source} {msg}
 
 [debug]
-# corresponds to levels in logging module or None
+use_debug: False
+# corresponds to levels in logging module
 verbosity: warning
 file: seshet-debug.log
 """
@@ -92,10 +101,18 @@ use_db: False
 
 [logging]
 # if using db, this will be ignored
-file: logs/%(target)s_%(date)s.log
+file: logs/{target}_{date}.log
+privmsg: [{time}] <{source}> {msg}
+join: [{time}] -- {source} ({hostmask}) has joined
+part: [{time}] -- {source} ({hostmask}) has left ({msg})
+quit: [{time}] -- {source} ({hostmask}) has quit ({msg})
+kick: [{time}] -- {target} ({hostmask}) has been kicked by {source} ({msg})
+mode: [{time}] -- {source} ({hostmask}) has set mode {parms} on {target}
+nick: [{time}] -- {source} is now known as {parms}
+action: [{time}] * {source} {msg}
 
 [debug]
-# corresponds to levels in logging module or None
+# corresponds to levels in logging module
 verbosity: debug
 file: seshet-debug.log
 """
@@ -143,13 +160,18 @@ def build_bot(config_file=None):
     db_conf = config['database']
     conn_conf = config['connection']
     client_conf = config['client']
+    log_conf = config['logging']
     # add more as they're used
 
     if db_conf.getboolean('use_db'):
         db = DAL(db_conf['db_string'])
         build_db_tables(db)
+        log_file = None
+        log_fmts = {}
     else:
         db = None
+        log_file = log_conf.pop('file')
+        log_fmts = log_conf.copy()
 
     seshetbot = bot.SeshetBot(client_conf['nickname'], db)
 
@@ -162,5 +184,9 @@ def build_bot(config_file=None):
     # client info
     seshetbot.user = client_conf['user']
     seshetbot.real_name = client_conf['realname']
+
+    # logging info
+    seshetbot.log_file = log_file
+    seshetbot.log_formats = log_fmts
 
     return seshetbot
