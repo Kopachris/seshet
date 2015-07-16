@@ -2,27 +2,24 @@
 
 """Seshet - Modular, dynamic IRC bot"""
 
+import os
 from setuptools import setup
-from os import path
 
 
-long_description = open(
-    path.join(
-        path.dirname(__file__),
-        'README.md'
-    )
-).read()
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
     name='seshet',
-    version='0.1.0',
+    version='0.1.0-3',
     url='https://github.com/kopachris/seshet',
     license='BSD',
     author='Christopher Koch',
     author_email='ch_koch@outlook.com',
     description='Modular, dynamic IRC bot',
-    long_description=long_description,  # update later
+    long_description=read('README.rst'),
     packages=['seshet'],
+    scripts = ['seshet-test.py'],
     install_requires=[
         'ircutils3',
         'pydal',
