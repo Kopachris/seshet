@@ -1,6 +1,7 @@
 */__pycache__/
 /build/
 /dist/
+/.idea/
 /*.egg-info/
 *.db
 *.table

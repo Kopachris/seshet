@@ -1,14 +1,18 @@
-# seshet
+seshet
+======
+
 Modular, dynamic Python IRC bot
 
 
-## Installing
+Installing
+----------
 
-Simply clone the repository and run `./setup.py install`. You may need to mark it as executable first, and may need to run it as root or with `sudo`.
+Simply clone the repository and run ``./setup.py install``. You may need to mark it as executable first, and may need to run it as root or with sudo.
 
-## Running
+Running
+-------
 
-Without installing, you can test it by running `./test.py`. It will not use a database by default. After isntalling, you can test that the installed version works by opening a Python 3 interpreter and running:
+Without installing, you can test it by running ``./test.py``. It will not use a database by default. After isntalling, you can test that the installed version works by opening a Python 3 interpreter and running::
 
     >>> import seshet.config
     >>> bot = seshet.config.build_bot()

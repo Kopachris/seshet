@@ -21,7 +21,7 @@ setup(
     author='Christopher Koch',
     author_email='ch_koch@outlook.com',
     description='Modular, dynamic IRC bot',
-    long_description='',  # update later
+    long_description=long_description,  # update later
     packages=['seshet'],
     install_requires=[
         'ircutils3',
