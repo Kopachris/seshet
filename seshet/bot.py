@@ -79,7 +79,7 @@ class SeshetBot(bot.SimpleBot):
         """
         
         self.db.event_log.insert(event_type=etype,
-                                 event_time=datetime.today(),
+                                 event_time=datetime.utcnow(),
                                  source=source,
                                  target=target,
                                  message=msg,
@@ -134,6 +134,27 @@ class SeshetBot(bot.SimpleBot):
         """
         pass
     
+    def connect(self, *args, **kwargs):
+        """Extend `client.SimpleClient.connect()` with defaults"""
+        defaults = {}
+
+        for i, k in enumerate(('host', 'port', 'channel', 'use_ssl', 'password')):
+            if len(args) < i:
+                defaults[k] = args[i]
+            elif k in kwargs:
+                defaults[k] = kwargs[k]
+            else:
+                def_k = 'default_' + k
+                defaults[k] = getattr(self, def_k, None)
+
+        if defaults['use_ssl'] is None:
+            defaults['use_ssl'] = False
+
+        if defaults['host'] is None:
+            raise TypeError("missing 1 required positional argument: 'host'")
+
+        client.SimpleClient.connect(self, **defaults)
+
     def start(self):
         self._loop(self.conn._map)
     

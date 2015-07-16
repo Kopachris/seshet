@@ -107,15 +107,21 @@ def build_db_tables(db):
     """
     if not isinstance(db, DAL) or not db._uri:
         raise Exception("Need valid DAL object to define tables")
+
+    # event log - self-explanatory, logs all events
+    db.define_table('event_log',
+                    Field('event_type'),
+                    Field('event_time', 'datetime'),
+                    Field('source'),
+                    Field('target'),
+                    Field('message', 'text'),
+                    Field('host'),
+                    Field('parms', 'list:string'),
+                    )
         
 
-def apply_config(bot, config=None, config_file=None):
-    """Take either a parsed configuration or a config file and apply it
-    to a SeshetBot instance. Return a dict containing server, port, and
-    default channels to pass as arguments to `SeshetBot.connect()`.
-    
-    Required argument:
-        bot - must be SeshetBot instance
+def build_bot(config=None, config_file=None):
+    """Parse a config and return a SeshetBot instance.
     
     Optional arguments:
         config - ConfigParser, dict, or str instance

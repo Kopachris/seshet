@@ -2,4 +2,4 @@
 and exceptions.
 """
 
-__all__ = ['bot', 'utils']
+__all__ = ['bot', 'utils', 'config']

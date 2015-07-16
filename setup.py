@@ -35,5 +35,7 @@ setup(
         'Programming Language :: Python :: 3.4',
 
         'Topic :: Communications :: Chat :: Internet Relay Chat',
+        'Topic :: Software Development :: Libraries :: Application Frameworks',
+        'Topic :: Software Development :: Libraries :: Python Modules',
     ]
 )
