@@ -180,7 +180,7 @@ class KVStore:
         db = self._db
         
         tbl = self._get_calling_module()
-        tbl_name = 'kv_' + tbl if table is not None else None
+        tbl_name = 'kv_' + tbl if tbl is not None else None
         if tbl is None or tbl_name not in db:
             # table doesn't exist
             return None
