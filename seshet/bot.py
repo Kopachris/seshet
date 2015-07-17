@@ -165,7 +165,7 @@ class SeshetBot(bot.SimpleBot):
     def on_mode(self, e):
         self.log('mode',
                  source=e.source,
-                 msg=str(e.params),
+                 msg=' '.join(e.params),
                  target=e.target,
                  hostmask=e.user+'@'+e.host,
                  )
