@@ -29,6 +29,10 @@ class SeshetBot(bot.SimpleBot):
     KV store available for all command modules. Each module will have
     its own namespace.
     """
+
+    log_file = 'seshet.log'
+    log_formats = {}
+    """Default values for text logging."""
     
     def __init__(self, nick='Seshet', db=None):
         """Extend `ircutils3.bot.SimpleBot.__init__()`.
@@ -92,11 +96,11 @@ class SeshetBot(bot.SimpleBot):
         pass
     
     def on_message(self, e):
-        self.log('PRIVMSG', e.source, e.message, e.target)
+        self.log('privmsg', e.source, e.message, e.target)
         self.run_commands(e)
     
     def on_join(self, e):
-        self.log('JOIN', e.source, '', e.target, e.user+'@'+e.host)
+        self.log('join', e.source, '', e.target, e.user+'@'+e.host)
         self.run_commands(e)
     
     def on_part(self, e):
@@ -165,14 +169,10 @@ class SeshetBot(bot.SimpleBot):
         """Override `log()` if bot is not initialized with a database
         connection. Do not call this method directly.
         """
-        if etype == 'PRIVMSG':
-            log = open('seshet.log', 'a')
-            log.write("<{}> {}\n".format(source, msg))
-            log.close()
-        elif etype == 'MODE':
-            log = open('seshet.log', 'a')
-            log.write("{} MODE {} {}\n".format(source, target, msg))
-            log.close()
+        with open(self.log_file, 'a') as log:
+            if etype in self.log_formats:
+                line = self.log_formats[etype].format(locals())
+                log.write(line+'\n')
     
     def _run_only_core(self, *args, **kwargs):
         """Override `_run_commands()` if bot is not initialized with a
