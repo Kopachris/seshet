@@ -107,7 +107,7 @@ join: [{time}] -- {source} ({hostmask}) has joined
 part: [{time}] -- {source} ({hostmask}) has left ({msg})
 quit: [{time}] -- {source} ({hostmask}) has quit ({msg})
 kick: [{time}] -- {target} ({hostmask}) has been kicked by {source} ({msg})
-mode: [{time}] -- {source} ({hostmask}) has set mode {parms} on {target}
+mode: [{time}] -- {source} ({hostmask}) has set mode {msg} on {target}
 nick: [{time}] -- {source} is now known as {parms}
 action: [{time}] * {source} {msg}
 

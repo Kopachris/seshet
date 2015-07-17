@@ -126,7 +126,7 @@ class SeshetBot(bot.SimpleBot):
         pass
     
     def on_mode(self, e):
-        self.log('mode', e.source, str(e.params), e.target)
+        self.log('mode', e.source, str(e.params), e.target, e.user+'@'+e.host)
     
     def before_poll(self):
         """Called each loop before polling sockets for I/O."""
