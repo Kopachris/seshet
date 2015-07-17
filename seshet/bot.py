@@ -125,8 +125,7 @@ class SeshetBot(bot.SimpleBot):
         pass
     
     def on_mode(self, e):
-        # will be changed
-        self.log('MODE', e.source, str(e.params), e.target)
+        self.log('mode', e.source, str(e.params), e.target)
     
     def before_poll(self):
         """Called each loop before polling sockets for I/O."""
@@ -169,10 +168,11 @@ class SeshetBot(bot.SimpleBot):
         """Override `log()` if bot is not initialized with a database
         connection. Do not call this method directly.
         """
-        with open(self.log_file, 'a') as log:
-            if etype in self.log_formats:
-                line = self.log_formats[etype].format(locals())
+        if etype in self.log_formats:
+            line = self.log_formats[etype].format(locals())
+            with open(self.log_file, 'a') as log:
                 log.write(line+'\n')
+        # else do nothing
     
     def _run_only_core(self, *args, **kwargs):
         """Override `_run_commands()` if bot is not initialized with a
