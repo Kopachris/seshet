@@ -106,9 +106,9 @@ privmsg: [{time}] <{source}> {msg}
 join: [{time}] -- {source} ({hostmask}) has joined
 part: [{time}] -- {source} ({hostmask}) has left ({msg})
 quit: [{time}] -- {source} ({hostmask}) has quit ({msg})
-kick: [{time}] -- {target} ({hostmask}) has been kicked by {source} ({msg})
+kick: [{time}] -- {params} has been kicked by {source} ({msg})
 mode: [{time}] -- {source} ({hostmask}) has set mode {msg} on {target}
-nick: [{time}] -- {source} is now known as {parms}
+nick: [{time}] -- {source} is now known as {params}
 action: [{time}] * {source} {msg}
 
 [debug]
@@ -133,7 +133,7 @@ def build_db_tables(db):
                     Field('target'),
                     Field('message', 'text'),
                     Field('host'),
-                    Field('parms', 'list:string'),
+                    Field('params', 'list:string'),
                     )
         
 

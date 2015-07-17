@@ -60,7 +60,7 @@ class SeshetBot(bot.SimpleBot):
         self.events["any"].add_handler(client._update_client_info)
         self.events["ctcp_version"].add_handler(client._reply_to_ctcp_version)
         
-    def log(self, etype, source, msg='', target='', hostmask='', parms=''):
+    def log(self, etype, source, msg='', target='', hostmask='', params=''):
         """Log an event in the database.
         
         Required:
@@ -89,7 +89,7 @@ class SeshetBot(bot.SimpleBot):
                                  target=target,
                                  message=msg,
                                  host=hostmask,
-                                 parms=parms,
+                                 params=params,
                                  )
         self.db.commit()
         
@@ -97,36 +97,78 @@ class SeshetBot(bot.SimpleBot):
         pass
     
     def on_message(self, e):
-        self.log('privmsg', e.source, e.message, e.target)
+        self.log('privmsg',
+                 source=e.source,
+                 msg=e.message,
+                 target=e.target,
+                 )
         self.run_commands(e)
     
     def on_join(self, e):
-        self.log('join', e.source, '', e.target, e.user+'@'+e.host)
+        self.log('join',
+                 source=e.source,
+                 target=e.target,
+                 hostmask=e.user+'@'+e.host,
+                 )
         self.run_commands(e)
     
     def on_part(self, e):
-        pass
+        self.log('part',
+                 source=e.source,
+                 hostmask=e.user+'@'+e.host,
+                 msg=' '.join(e.params[1:]),
+                 target=e.target,
+                 )
     
     def on_quit(self, e):
-        pass
+        for chan in self.channels.values():
+            if e.source in chan.user_list:
+                self.log('quit',
+                         source=e.source,
+                         hostmask=e.user+'@'+e.host,
+                         msg=' '.join(e.params),
+                         target=chan.name,
+                         )
     
     def on_disconnect(self, e):
         pass
     
     def on_kick(self, e):
-        pass
+        self.log('kick',
+                 source=e.source,
+                 target=e.target,
+                 params=e.params[0],
+                 msg=' '.join(e.params[1:]),
+                 hostmask=e.user+'@'+e.host,
+                 )
     
     def on_nick_change(self, e):
-        pass
+        for chan in self.channels.values():
+            if e.source in chan.user_list:
+                self.log('nick',
+                         source=e.source,
+                         hostmask=e.user+'@'+e.host,
+                         target=chan.name,
+                         params=e.target,
+                         )
     
     def on_ctcp_action(self, e):
-        pass
+        self.log('action',
+                 source=e.source,
+                 target=e.target,
+                 msg=' '.join(e.params),
+                 )
     
     def on_welcome(self, e):
         pass
     
     def on_mode(self, e):
-        self.log('mode', e.source, str(e.params), e.target, e.user+'@'+e.host)
+        self.log('mode',
+                 source=e.source,
+                 msg=str(e.params),
+                 target=e.target,
+                 hostmask=e.user+'@'+e.host,
+                 )
     
     def before_poll(self):
         """Called each loop before polling sockets for I/O."""
@@ -165,7 +207,7 @@ class SeshetBot(bot.SimpleBot):
     def _remove_user(self, e):
         pass
     
-    def _log_to_file(self, etype, source, msg='', target='', hostmask='', parms=''):
+    def _log_to_file(self, etype, source, msg='', target='', hostmask='', params=''):
         """Override `log()` if bot is not initialized with a database
         connection. Do not call this method directly.
         """
