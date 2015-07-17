@@ -32,6 +32,7 @@ class SeshetBot(bot.SimpleBot):
 
     log_file = 'seshet.log'
     log_formats = {}
+    locale = {}
     """Default values for text logging."""
     
     def __init__(self, nick='Seshet', db=None):
@@ -168,9 +169,20 @@ class SeshetBot(bot.SimpleBot):
         """Override `log()` if bot is not initialized with a database
         connection. Do not call this method directly.
         """
+        today = datetime.today()
+        date = today.strftime(self.locale['date_fmt'])
+        time = today.strftime(self.locale['time_fmt'])
+        datetime_s = today.strftime(self.locale['short_datetime_fmt'])
+        datetime_l = today.strftime(self.locale['long_datetime_fmt'])
+
         if etype in self.log_formats:
-            line = self.log_formats[etype].format(locals())
-            with open(self.log_file, 'a') as log:
+            file_path = os.path.expanduser(self.log_file.format(**locals()))
+            file_dir = os.path.dirname(file_path)
+            if not os.path.isdir(file_dir):
+                os.makedirs(file_dir)
+
+            line = self.log_formats[etype].format(**locals())
+            with open(file_path, 'a') as log:
                 log.write(line+'\n')
         # else do nothing
     

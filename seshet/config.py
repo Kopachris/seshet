@@ -101,7 +101,7 @@ use_db: False
 
 [logging]
 # if using db, this will be ignored
-file: logs/{target}_{date}.log
+file: ~/.seshet/logs/{target}_{date}.log
 privmsg: [{time}] <{source}> {msg}
 join: [{time}] -- {source} ({hostmask}) has joined
 part: [{time}] -- {source} ({hostmask}) has left ({msg})
@@ -114,7 +114,7 @@ action: [{time}] * {source} {msg}
 [debug]
 # corresponds to levels in logging module
 verbosity: debug
-file: seshet-debug.log
+file: ~/.seshet/logs/debug.log
 """
 
 
@@ -148,7 +148,7 @@ def build_bot(config_file=None):
     """
     from . import bot
 
-    config = ConfigParser()
+    config = ConfigParser(interpolation=None)
     if config_file is None:
         config.read_string(default_config)
     elif isinstance(config_file, ConfigParser):
@@ -171,7 +171,7 @@ def build_bot(config_file=None):
     else:
         db = None
         log_file = log_conf.pop('file')
-        log_fmts = log_conf.copy()
+        log_fmts = dict(log_conf)
 
     seshetbot = bot.SeshetBot(client_conf['nickname'], db)
 
@@ -188,5 +188,6 @@ def build_bot(config_file=None):
     # logging info
     seshetbot.log_file = log_file
     seshetbot.log_formats = log_fmts
+    seshetbot.locale = dict(config['locale'])
 
     return seshetbot
