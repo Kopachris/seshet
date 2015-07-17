@@ -169,7 +169,8 @@ class SeshetBot(bot.SimpleBot):
         """Override `log()` if bot is not initialized with a database
         connection. Do not call this method directly.
         """
-        today = datetime.today()
+        today = datetime.utcnow()
+        # TODO: Use self.locale['timezone'] for changing time
         date = today.strftime(self.locale['date_fmt'])
         time = today.strftime(self.locale['time_fmt'])
         datetime_s = today.strftime(self.locale['short_datetime_fmt'])
