@@ -6,7 +6,7 @@ So that the same module can be used by multiple bots with differing configuratio
 
 ### Registry table: db.modules
 
-Note if manually editing database entries that `pydal` uses the pipe character ('|') as a separator in lists for most databases (the exception being NoSQL options such as Google datastore which have a native list type). Actual pipe characters in the data are escaped with another pipe ('||').
+Note if manually editing database entries that `pydal` uses the pipe character (`|`) as a separator in lists for most databases (the exception being NoSQL options such as Google datastore which have a native list type). Actual pipe characters in the data are escaped with another pipe (`||`).
 
 * name (string) - The module name which is passed to `importlib.import_module()`.
 * enabled (boolean) - Globally enable/disable the module, leaving all other settings intact.
@@ -17,6 +17,22 @@ Note if manually editing database entries that `pydal` uses the pipe character (
 * dnicks (list:string) - If nick is present in the same channel as the bot, disables the module. Overrides both `echannels` and `enicks`. Useful if there's another less advanced bot in the channel with similar functionality.
 * whitelist (list:string) - List of hostmasks. If the event source is in this list, run the module regardless of the other channel and nick lists.
 * blacklist (list:string) - Same as `whitelist`, except never run this module if the event source is in this list. Good for banning abusers.
+* cmd_prefix (string, length 1) - Override global command prefix (default: `!`).
+* auth_group (ref:auth_groups) - Defines an authorization profile for this module.
+
+### Authorization profiles: db.auth_groups
+
+Seshet has four styles of authentication: NickServ, username and password, nickname and password, and password only.
+
+With NickServ authentication, all authentication is offloaded to NickServ. A number of NickServ accounts may be specified for authorization, and then authentication can be queried by messaging NickServ `ACC <nickname> *` and parsing the results for an account name. NickServ authentication is recommended for most use cases.
+
+Username and password authentication requires a user to send the bot (in private message) an invocation of the `auth` command with two arguments: username and password. The user will remain authenticated for the duration of their session.
+
+Nickname and password is similar, but `auth` only requires one argument: the password. The bot will take the user's nickname as their username. Like nickname and password, the user will remain authenticated for the duration of their session.
+
+Likewise, password authentication only requires a password as the argument to `auth`, but it can be used from any nickname.
+
+### 
 
 ## Import mechanics
 
