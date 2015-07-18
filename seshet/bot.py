@@ -167,7 +167,6 @@ class SeshetBot(bot.SimpleBot):
                  source=e.source,
                  msg=' '.join(e.params),
                  target=e.target,
-                 hostmask=e.user+'@'+e.host,
                  )
     
     def before_poll(self):
@@ -217,6 +216,9 @@ class SeshetBot(bot.SimpleBot):
         time = today.strftime(self.locale['time_fmt'])
         datetime_s = today.strftime(self.locale['short_datetime_fmt'])
         datetime_l = today.strftime(self.locale['long_datetime_fmt'])
+        
+        if target == self.nickname and etype in ('privmsg', 'action'):
+            target = source
 
         if etype in self.log_formats:
             file_path = os.path.expanduser(self.log_file.format(**locals()))
