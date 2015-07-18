@@ -32,7 +32,7 @@ Nickname and password is similar, but `auth` only requires one argument: the pas
 
 Likewise, password authentication only requires a password as the argument to `auth`, but it can be used from any nickname.
 
-### 
+**TODO** outline this table and the rest of this part of the schema.
 
 ## Import mechanics
 
