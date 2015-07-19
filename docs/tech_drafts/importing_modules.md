@@ -18,11 +18,11 @@ Note if manually editing database entries that `pydal` uses the pipe character (
 * whitelist (list:string) - List of hostmasks. If the event source is in this list, run the module regardless of the other channel and nick lists.
 * blacklist (list:string) - Same as `whitelist`, except never run this module if the event source is in this list. Good for banning abusers.
 * cmd_prefix (string, length 1) - Override global command prefix (default: `!`).
-* auth_group (ref:auth_groups) - Defines an authorization profile for this module.
+* acl (json) - Define an access control list for this module (see below).
 
-### Authorization profiles: db.auth_groups
+### Access control lists: db.modules.acl
 
-Seshet has four styles of authentication: NickServ, username and password, nickname and password, and password only.
+Seshet has four authentication options for users: NickServ, username and password, nickname and password, and password only.
 
 With NickServ authentication, all authentication is offloaded to NickServ. A number of NickServ accounts may be specified for authorization, and then authentication can be queried by messaging NickServ `ACC <nickname> *` and parsing the results for an account name. NickServ authentication is recommended for most use cases.
 
@@ -32,7 +32,24 @@ Nickname and password is similar, but `auth` only requires one argument: the pas
 
 Likewise, password authentication only requires a password as the argument to `auth`, but it can be used from any nickname.
 
-**TODO** outline this table and the rest of this part of the schema.
+Each module has an access control list stored in the database as json. Upon registering a module, Seshet will usually build a default ACL with an "anyone" role. Certain core modules will have a more complex ACL built by default allowing certain commands to only be used by the owner of the bot (defined in the bot's configuration file or `SeshetBot.owner`). Example:
+
+```json
+{
+  "owner": {
+    "nickserv": "Kopachris",
+    "user": "Kopachris"
+  },
+  "admin": {"group": ["wheel", "admin"]},
+  "anyone": {}
+}
+```
+
+Access control roles are defined by credentials and method of authentication. Each role can use one or more authentication methods, and each authentication method can accept one or more credentials. Valid authentication methods are: `nickserv`, `user`, `password`, and `group`. `group` authentication uses either username and password (if a username is provided) or nickname and password (if a username is not provided) for authentication and then checks the user's group membership for authorization. `user` references a nickname in the `auth_users` table. `password` authentication references an ID in the `auth_pwd` table. `group` authentication references a group name in the `auth_groups` table.
+
+The advantages of this approach are that json is easy to parse (being natively supported by `pydal`) and, if implemented properly, defining roles in terms of authentication methods and accepted credentials will allow admins to easily extend the Seshet's authorization system with new authentication methods.
+
+**Please note that Seshet does not perform any access control on its own. It is still up to the module to restrict access as needed by checking a user's authorization.** Seshet will provide a helper method for checking a user's roles for a given module. Some standard group and role names will be suggested in Seshet's API documentation.
 
 ## Import mechanics
 
