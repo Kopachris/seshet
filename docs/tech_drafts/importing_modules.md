@@ -10,6 +10,7 @@ Note if manually editing database entries that `pydal` uses the pipe character (
 
 * name (string) - The module name which is passed to `importlib.import_module()`.
 * enabled (boolean) - Globally enable/disable the module, leaving all other settings intact.
+* event_types (list:string) - Read-only list of events that the module handles. Imported from the module when it's registered - if this attribute changes in the source code (see API docs), the module will have to be removed from the database and re-registered.
 * description (text) - By default, the docstring of the module. Used when the core command `!help` is invoked with no arguments to list all enabled modules and a brief description of their usage or what they do.
 * echannels (list:string) - Channels the module is enabled on.
 * dchannels (list:string) - Channels the module is explicitly disabled on. Overrides both `echannels` and `enicks`.
@@ -19,6 +20,7 @@ Note if manually editing database entries that `pydal` uses the pipe character (
 * blacklist (list:string) - Same as `whitelist`, except never run this module if the event source is in this list. Good for banning abusers.
 * cmd_prefix (string, length 1) - Override global command prefix (default: `!`).
 * acl (json) - Define an access control list for this module (see below).
+* rate_limit (json) - Define rate limiting for this module (see below).
 
 ### Access control lists: db.modules.acl
 
@@ -74,7 +76,7 @@ So how do we do this cleanly? We can't. We can only do it "well enough." The ori
 
 ### Global modules and user modules
 
-The default modules included with Seshet will normally be installed as a package, `seshet_modules` in the Python installation's site-packages directory. However, to make modules as easy as possible to work with, the bot should also check for, and prefer, a user-specified directory for modules.
+The default modules included with Seshet will normally be installed as a package, `seshet_modules`, in the Python installation's site-packages directory. However, to make modules as easy as possible to work with, the bot should also check for, and prefer, a user-specified directory for modules.
 
 This will be done by importing `seshet_modules` at the top level of `bot` and including some code in `run()`:
 
@@ -84,3 +86,66 @@ if self.module_directory is not None:
 ```
 
 When the module is imported from the `seshet_modules` package, then, the Python interpreter will first look in the directory specified by `self.module_directory`, and then the package directory itself.
+
+## Running modules
+
+After logging the event, each of Seshet's main event handlers places a call to `run_modules()`, passing the event object to it. `run_modules()` then analyzes the event, checks flood protection, and determines which modules should run. The factors which determine whether or not any given module should run are quite complex and robust, taking into account event type, channel or private message, the channel's other occupants, whether it looks like the message was directed toward the bot specifically, and even the message content in some cases.
+
+To get an initial list of modules, Seshet queries the database for modules which are registered for the IRC event being handled:
+
+```python
+def run_modules(self, event):
+    db = self.db
+
+    ...
+    
+    event_types = db.modules.event_types
+    module_list = db(event_types.contains(event.command)).select()
+    
+    ...
+```
+
+### PRIVMSG and CTCP_ACTION
+
+The next items Seshet checks for message-like events are each module's whitelist, blacklist, and channel and user enabling and disabling factors. For each module:
+
+0. If `event.source` is in the module's whitelist, add the module to the list of modules to run.
+0. If `event.source` is in the module's blacklist, discard the module.
+0. If `self.nickname` is in the module's enabler nicks:
+  0. If `event.target` equals `self.nickname`, or...
+  0. If `event.message` starts with `self.nickname`, `self.user`, or `self.real_name`, add the module to the list of modules to run.
+0. If `event.target` is in the module's disabled channels, discard the module.
+0. If any of the nicknames in the module's disabler nicks are in `self.channels[event.target].users`, discard the module.
+0. If `event.target` is in the module's enabled channels, add the module to the list of modules to run.
+0. If any of the nicknames in the module's enabler nicks are in `self.channels[event.target].users`, add the module to the list of modules to run.
+
+#### Rate limiting
+
+Rate limiting for each module can be simple or complex. The simplest rate limiting (other than no rate limiting) is just:
+
+```json
+{
+  "rate-limit": 20
+}
+```
+
+Or similar. The `rate-limit` parameter simply defines the minimum delay in seconds between uses of a module on a given channel. Rate limits can also be defined for individual simple commands within a module or for all regex commands as a whole:
+
+```json
+{
+  "commands": {
+    "weather": {"rate-limit": 20},
+    "forecast": {"rate-limit": 30},
+  },
+  "regex": {"rate-limit": 60}
+}
+```
+
+Rate limiting can also be applied for each user. The limits will apply across channels, but will be ignored for users who are in the module's whitelist. To apply a rate limit for all individual users, simply replace `"rate-limit"` with `"user-rate"`. To limit only specific users, use a `"users"` block similar to `"commands"` and `"regex"` (can be used either globally for the module or as a limit under `"commands"` or `"regex"`). Each user is defined with a hostmask:
+
+```json
+{
+  "rate-limit": 20,
+  "users": {"*kail*!*@*": 60}
+}
+```

@@ -48,7 +48,7 @@ class SeshetBot(bot.SimpleBot):
             # no database connection, only log to file and run
             # core command modules
             self.log = self._log_to_file
-            self.run_commands = self._run_only_core
+            self.run_modules = self._run_only_core
             
             # dummy KV store since no db
             self.storage = Storage()
@@ -93,7 +93,7 @@ class SeshetBot(bot.SimpleBot):
                                  )
         self.db.commit()
         
-    def run_commands(self, e):
+    def run_modules(self, e):
         pass
     
     def on_message(self, e):
@@ -102,7 +102,7 @@ class SeshetBot(bot.SimpleBot):
                  msg=e.message,
                  target=e.target,
                  )
-        self.run_commands(e)
+        self.run_modules(e)
     
     def on_join(self, e):
         self.log('join',
@@ -110,7 +110,7 @@ class SeshetBot(bot.SimpleBot):
                  target=e.target,
                  hostmask=e.user+'@'+e.host,
                  )
-        self.run_commands(e)
+        self.run_modules(e)
     
     def on_part(self, e):
         self.log('part',
