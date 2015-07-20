@@ -53,6 +53,37 @@ The advantages of this approach are that json is easy to parse (being natively s
 
 **Please note that Seshet does not perform any access control on its own. It is still up to the module to restrict access as needed by checking a user's authorization.** Seshet will provide a helper method for checking a user's roles for a given module. Some standard group and role names will be suggested in Seshet's API documentation.
 
+### Rate limiting: db.modules.rate_limit
+
+Rate limiting for each module can be simple or complex. The simplest rate limiting (other than no rate limiting) is just:
+
+```json
+{
+  "rate-limit": 20
+}
+```
+
+Or similar. The `rate-limit` parameter simply defines the minimum delay in seconds between uses of a module on a given channel. Rate limits can also be defined for individual simple commands within a module or for all regex commands as a whole:
+
+```json
+{
+  "commands": {
+    "weather": {"rate-limit": 20},
+    "forecast": {"rate-limit": 30},
+  },
+  "regex": {"rate-limit": 60}
+}
+```
+
+Rate limiting can also be applied for each user. The limits will apply across channels, but will be ignored for users who are in the module's whitelist. To apply a rate limit for all individual users, simply replace `"rate-limit"` with `"user-rate"`. To limit only specific users, use a `"users"` block similar to `"commands"` and `"regex"` (can be used either globally for the module or as a limit under `"commands"` or `"regex"`). Each user is defined with a hostmask:
+
+```json
+{
+  "rate-limit": 20,
+  "users": {"*kail*!*@*": 60}
+}
+```
+
 ### Registering modules
 
 When a bot is initialized with a new database, it will automatically register and enable the `core` module. This module contains commands essential for administration of the bot. After the bot connects to an IRC network, the owner can automatically register all default modules by invoking the `addmodule` command with a wildcard character, `*`. Alternatively, the owner can register individual modules by giving their names to the `addmodule` command.
@@ -119,33 +150,4 @@ The next items Seshet checks for message-like events are each module's whitelist
 0. If `event.target` is in the module's enabled channels, add the module to the list of modules to run.
 0. If any of the nicknames in the module's enabler nicks are in `self.channels[event.target].users`, add the module to the list of modules to run.
 
-#### Rate limiting
-
-Rate limiting for each module can be simple or complex. The simplest rate limiting (other than no rate limiting) is just:
-
-```json
-{
-  "rate-limit": 20
-}
-```
-
-Or similar. The `rate-limit` parameter simply defines the minimum delay in seconds between uses of a module on a given channel. Rate limits can also be defined for individual simple commands within a module or for all regex commands as a whole:
-
-```json
-{
-  "commands": {
-    "weather": {"rate-limit": 20},
-    "forecast": {"rate-limit": 30},
-  },
-  "regex": {"rate-limit": 60}
-}
-```
-
-Rate limiting can also be applied for each user. The limits will apply across channels, but will be ignored for users who are in the module's whitelist. To apply a rate limit for all individual users, simply replace `"rate-limit"` with `"user-rate"`. To limit only specific users, use a `"users"` block similar to `"commands"` and `"regex"` (can be used either globally for the module or as a limit under `"commands"` or `"regex"`). Each user is defined with a hostmask:
-
-```json
-{
-  "rate-limit": 20,
-  "users": {"*kail*!*@*": 60}
-}
-```
+For each of the modules Seshet has determined may run according to those conditions, it will check recent activity against the rate limiting parameters defined for each module.
