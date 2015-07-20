@@ -51,6 +51,10 @@ The advantages of this approach are that json is easy to parse (being natively s
 
 **Please note that Seshet does not perform any access control on its own. It is still up to the module to restrict access as needed by checking a user's authorization.** Seshet will provide a helper method for checking a user's roles for a given module. Some standard group and role names will be suggested in Seshet's API documentation.
 
+### Registering modules
+
+When a bot is initialized with a new database, it will automatically register and enable the `core` module. This module contains commands essential for administration of the bot. After the bot connects to an IRC network, the owner can automatically register all default modules by invoking the `addmodule` command with a wildcard character, `*`. Alternatively, the owner can register individual modules by giving their names to the `addmodule` command.
+
 ## Import mechanics
 
 We have two requirements for importing modules in Seshet:
