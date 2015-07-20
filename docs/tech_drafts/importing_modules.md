@@ -105,6 +105,8 @@ So how do we do this cleanly? We can't. We can only do it "well enough." The ori
 
 *If someone has a better idea, feel free to open an issue for it.*
 
+*Idea: Could we use the `watchdog` module to only reload modules when they're actually changed? It would certainly lower disk activity.*
+
 ### Global modules and user modules
 
 The default modules included with Seshet will normally be installed as a package, `seshet_modules`, in the Python installation's site-packages directory. However, to make modules as easy as possible to work with, the bot should also check for, and prefer, a user-specified directory for modules.
