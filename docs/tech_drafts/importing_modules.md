@@ -84,6 +84,26 @@ Rate limiting can also be applied for each user. The limits will apply across ch
 }
 ```
 
+Rate limiting need not be defined in terms of a delay between uses of a module or command. Instead, a limit can be defined in terms of maximum uses of a module or command (or group of modules or commands, see below) within a given amount of time. In such cases, users can use the module multiple times back-to-back up until their limit, and then there is a cool off period before they can use it again. For example,
+
+```json
+{
+  "amount-limit": 5,
+  "cooldown": "1 minute"
+}
+```
+
+will allow users to use the module up to five times in any given one-minute period. *Note: Seshet uses the `dateutil` module for parsing the cooldown string into a `timedelta`. See `dateutil`'s docs for details.*
+
+Finally, rate limiting can also be grouped. Grouping works by applying the rate limiting defined for a given module or command if *any* modules or commands using the same group have been used in that period. For example, if you set module `foo` to rate limit 60 seconds with group `foobar` and set module `bar` to rate limit 30 seconds with the same group, then `bar` can be used 30 seconds after using `foo`, but `foo` can only be used 60 seconds after `bar`.
+
+```json
+{
+  "rate-limit": 60,
+  "group": "annoying stuff"
+}
+```
+
 ### Registering modules
 
 When a bot is initialized with a new database, it will automatically register and enable the `core` module. This module contains commands essential for administration of the bot. After the bot connects to an IRC network, the owner can automatically register all default modules by invoking the `addmodule` command with a wildcard character, `*`. Alternatively, the owner can register individual modules by giving their names to the `addmodule` command.
