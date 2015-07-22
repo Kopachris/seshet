@@ -117,15 +117,26 @@ We have two requirements for importing modules in Seshet:
 
 ### Dynamic modules
 
-Modules should be dynamically loaded. That is, they should only be loaded as needed. In order to ensure *all* objects in a module are reloaded (other than the ones stored in `SeshetBot.session` or `SeshetBot.storage`), modules must be unloaded after each use.
+Modules should be able to be edited without having to completely restart the bot. Seshet's `run()` method will initialize and start a `watchdog` event handler. The event handler will subclass `PatternMatchingEventHandler` and watch `SeshetBot.module_directory` only (any changes to modules in site-packages will require a full restart of the bot) and will reload a module when it's changed if the module is registered. The code for the event handler should go in `seshet.utils`:
 
-It's generally frowned upon to delete modules using the `del` statement. Such deletions are typically incomplete because the way modules are used often means references to objects within the module still exist that the garbage collector can't remove.
+```python
+from watchdog.events import PatternMatchingEventHandler
 
-So how do we do this cleanly? We can't. We can only do it "well enough." The original BotenAlfred accomplishes this by `del`eting a module when finished with it and `reload()`ing it immediately after the next import.
-
-*If someone has a better idea, feel free to open an issue for it.*
-
-*Idea: Could we use the `watchdog` module to only reload modules when they're actually changed? It would certainly lower disk activity.*
+class ModuleUpdate(PatternMatchingEventHandler):
+    patterns = ["*.py"]
+    
+    def __init__(self, bot):
+        PatternMatchingEventHandler.__init__(self)
+        self._bot = bot
+        self._db = bot.db
+        
+    def on_modified(self, event):
+        # identify the module pointed to by event.src_path
+        # del the module from sys.modules
+        # import and reload() the module
+        # return
+        ...
+```
 
 ### Global modules and user modules
 
