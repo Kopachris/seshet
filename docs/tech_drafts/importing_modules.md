@@ -117,7 +117,7 @@ We have two requirements for importing modules in Seshet:
 
 ### Dynamic modules
 
-Modules should be able to be edited without having to completely restart the bot. Seshet's `run()` method will initialize and start a `watchdog` event handler. The event handler will subclass `PatternMatchingEventHandler` and watch `SeshetBot.module_directory` only (any changes to modules in site-packages will require a full restart of the bot) and will reload a module when it's changed if the module is registered. The code for the event handler should go in `seshet.utils`:
+Modules should be able to be edited without having to completely restart the bot. Seshet's `run()` method will initialize and start an event handler from the [watchdog](https://pypi.python.org/pypi/watchdog) package. The event handler will subclass `PatternMatchingEventHandler` and watch `SeshetBot.module_directory` only (any changes to modules in site-packages will require a full restart of the bot) and will reload a module when it's changed if the module is registered. The code for the event handler should go in `seshet.utils`:
 
 ```python
 from watchdog.events import PatternMatchingEventHandler
@@ -137,6 +137,8 @@ class ModuleUpdate(PatternMatchingEventHandler):
         # return
         ...
 ```
+
+`watchdog` will not be required for installing `seshet`. If `watchdog` cannot be imported, then the bot will be initialized with `_run_only_core` just as though it were initialized with no database connection. `run()` will have to be modified to accomodate.
 
 ### Global modules and user modules
 
