@@ -191,7 +191,7 @@ For each of the modules Seshet has determined may run according to those conditi
 
 According to [RFC 1459](https://tools.ietf.org/html/rfc1459#section-4.4.2), automatic replies must never be sent in response to `NOTICE` messages. In accordance with that, the bot's `send_message()` method will be temporarily replaced with a method which logs the message as an error without sending the message. Modules may get around this restriction by using `SeshetBot.execute()` directly, but this is discouraged.
 
-Otherwise, all the same rules as `PRIVMSG` and `CTCP_ACTION` also apply to `NOTICE` messages for determining which modules to run.
+Otherwise, all the same rules as `PRIVMSG` and `CTCP_ACTION` also apply to `NOTICE` messages for determining which modules to run with the exception that rate limiting will not apply.
 
 ### JOIN, PART, QUIT, KICK, NICK, and MODE
 
