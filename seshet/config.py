@@ -136,6 +136,21 @@ def build_db_tables(db):
                     Field('host'),
                     Field('params', 'list:string'),
                     )
+    db.define_table('modules',
+                    Field('name', notnull=True, unique=True, length=256),
+                    Field('enabled', 'boolean'),
+                    Field('event_types', 'list:string'),
+                    Field('description', 'text'),
+                    Field('echannels', 'list:string'),
+                    Field('dchannels', 'list:string'),
+                    Field('enicks', 'list:string'),
+                    Field('dnicks', 'list:string'),
+                    Field('whitelist', 'list:string'),
+                    Field('blacklist', 'list:string'),
+                    Field('cmd_prefix', length=1, default='!'),
+                    Field('acl', 'json'),
+                    Field('rate_limit', 'json'),
+                    )
         
 
 def build_bot(config_file=None):
