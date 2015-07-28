@@ -153,11 +153,11 @@ class KVStore:
     def __init__(self, db):
         # make sure some tables are defined:
         
-        if 'modules' not in db:
+        if 'namespaces' not in db:
             # list of registered modules
-            db.define_table('modules', Field('name'))
+            db.define_table('namespaces', Field('name'))
             
-        for m in db().select(db.modules.ALL):
+        for m in db().select(db.namespaces.ALL):
             # these are modules' own "namespaces"
             tbl_name = 'kv_' + m.name
             if tbl_name not in db:
@@ -244,13 +244,10 @@ class KVStore:
     def _register_module(self, name):
         db = self._db
         
-        #if name == 'modules':
-            # name collision with existing table
-            #raise ValueError('The module name %s is reserved' % name)
         tbl_name = 'kv_' + name
             
-        if db(db.modules.name == name).isempty():
-            db.modules.insert(name=name)
+        if db(db.namespaces.name == name).isempty():
+            db.namespaces.insert(name=name)
             db.commit()
         if tbl_name not in db:
             db.define_table(tbl_name,
@@ -271,7 +268,7 @@ class KVStore:
         caller_mod = inspect.getmodulename(calling_file)
     
         db = self._db
-        mod = db(db.modules.name == caller_mod)
+        mod = db(db.namespaces.name == caller_mod)
         if mod.isempty():
             return None
         else:

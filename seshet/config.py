@@ -122,6 +122,7 @@ def build_db_tables(db):
     """Build Seshet's basic database schema. Requires one parameter,
     `db` as `pydal.DAL` instance.
     """
+    
     if not isinstance(db, DAL) or not db._uri:
         raise Exception("Need valid DAL object to define tables")
 
@@ -146,6 +147,7 @@ def build_bot(config_file=None):
         
         If config_file is None, will read default config defined in this module.
     """
+    
     from . import bot
 
     config = ConfigParser(interpolation=None)
