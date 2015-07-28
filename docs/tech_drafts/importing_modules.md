@@ -186,3 +186,13 @@ The next items Seshet checks for message-like events are each module's whitelist
 0. If any of the nicknames in the module's enabler nicks are in `self.channels[event.target].users`, add the module to the list of modules to run.
 
 For each of the modules Seshet has determined may run according to those conditions, it will check recent activity against the rate limiting parameters defined for each module.
+
+### NOTICE
+
+According to [RFC 1459](https://tools.ietf.org/html/rfc1459#section-4.4.2), automatic replies must never be sent in response to `NOTICE` messages. In accordance with that, the bot's `send_message()` method will be temporarily replaced with a method which logs the message as an error without sending the message. Modules may get around this restriction by using `SeshetBot.execute()` directly, but this is discouraged.
+
+Otherwise, all the same rules as `PRIVMSG` and `CTCP_ACTION` also apply to `NOTICE` messages for determining which modules to run.
+
+### JOIN, PART, QUIT, KICK, NICK, and MODE
+
+All modules assigned to these event types will run regardless of source or target. Rate limiting will not apply.
