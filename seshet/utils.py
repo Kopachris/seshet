@@ -50,7 +50,12 @@ class IRCstr(str):
         return hash(self.lower())
         
     def __eq__(self, other):
-        return str(self.lower()) == str(other.lower())
+        if isinstance(other, IRCstr):
+            return str(self.lower()) == str(other.lower())
+        elif isinstance(other, str):
+            return str(self.lower()) == other.translate(upper_to_lower)
+        else:
+            raise TypeError("Could not compare {} and {}".format(self, other))
 
 
 class CaselessDictionary(dict):
