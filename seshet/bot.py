@@ -11,6 +11,33 @@ from ircutils3 import bot, client
 from .utils import KVStore, Storage
 
 
+# define our own because we do way more than the simplistic classes in protocol
+
+class SeshetUser(object):
+    """Represent an individual user. Users are hashable by nickname, so can be
+    used in sets and as keys of dictionaries.
+    """
+    pass
+
+
+class SeshetChannel(object):
+    """Represent an IRC channel. User membership in a channel can be tested by
+    nickname:
+    
+    >>> bot.join('#botwar')
+    >>> bot.nickname in bot.channels['#botwar']
+    True
+    """
+    
+    users = set()
+    """Set of SeshetUser objects representing the list of users in the
+    channel.
+    """
+    
+    def __init__(self, name):
+        self.name = name
+
+
 class SeshetBot(bot.SimpleBot):
     """Extend `ircutils3.bot.SimpleBot`.
     
