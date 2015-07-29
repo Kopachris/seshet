@@ -5,10 +5,11 @@ import sys
 import traceback
 from io import StringIO
 from datetime import datetime
+from collections import defaultdict
 
 from ircutils3 import bot, client
 
-from .utils import KVStore, Storage
+from .utils import KVStore, Storage, CaselessDict
 
 
 # define our own because we do way more than the simplistic classes in protocol
@@ -17,7 +18,12 @@ class SeshetUser(object):
     """Represent an individual user. Users are hashable by nickname, so can be
     used in sets and as keys of dictionaries.
     """
-    pass
+    
+    def __init__(self, nickname):
+        self.nickname = nickname
+    
+    def __hash__(self):
+        return hash(self.nickname)
 
 
 class SeshetChannel(object):
@@ -62,6 +68,9 @@ class SeshetBot(bot.SimpleBot):
     locale = {}
     """Default values for text logging."""
     
+    channels = CaselessDict()
+    """List of channels the bot is listening in."""
+    
     def __init__(self, nick='Seshet', db=None):
         """Extend `ircutils3.bot.SimpleBot.__init__()`.
         
@@ -86,6 +95,7 @@ class SeshetBot(bot.SimpleBot):
         # Add default handlers
         self.events["any"].add_handler(client._update_client_info)
         self.events["ctcp_version"].add_handler(client._reply_to_ctcp_version)
+        self.events["name_reply"].add_handler(self._add_channel_names)
         
     def log(self, etype, source, msg='', target='', hostmask='', params=''):
         """Log an event in the database.
@@ -229,6 +239,9 @@ class SeshetBot(bot.SimpleBot):
 
     def start(self):
         self._loop(self.conn._map)
+        
+    def _add_channel_names(self, e):
+        pass
     
     def _remove_user(self, e):
         pass

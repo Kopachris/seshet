@@ -3,13 +3,114 @@
 `Storage` is copied from gluon.storage, part of the web2py framework,
     Copyrighted by Massimo Di Pierro <mdipierro@cs.depaul.edu>,
     License: LGPLv3 (http://www.gnu.org/licenses/lgpl.html)
+    
+`CaselessDictionary` is copied from https://gist.github.com/babakness/3901174,
+    Copyrighted by GitHub user babakness, license unspecified
 """
 
 import random
 import inspect
 import pickle
+import string
 
 from pydal import Field
+
+
+irc_uppercase = string.ascii_uppercase + "[]\~"
+irc_lowercase = string.ascii_lowercase + "{}|^"
+upper_to_lower = str.maketrans(irc_uppercase, irc_lowercase)
+lower_to_upper = str.maketrans(irc_lowercase, irc_uppercase)
+
+
+class IRCstr(str):
+    """Implement str, overriding case-changing methods to only handle ASCII
+    cases plus "{}|^" and "[]\~" as defined by RFC 2812.
+    
+    Hashing and equality testing is case insensitive! That is, __hash__ will
+    return the hash of the lowercase version of the string, and __eq__ will
+    convert both operands to lowercase before testing equality.
+    """
+    
+    def casefold(self):
+        return self.lower()
+        
+    def lower(self):
+        return self.translate(upper_to_lower)
+    
+    def upper(self):
+        return self.translate(lower_to_upper)
+    
+    def islower(self):
+        return str(self) == str(self.lower())
+    
+    def isupper(self):
+        return str(self) == str(self.upper())
+    
+    def __hash__(self):
+        return hash(self.lower())
+        
+    def __eq__(self, other):
+        return str(self.lower()) == str(other.lower())
+
+
+class CaselessDictionary(dict):
+    """Dictionary that enables case insensitive searching while preserving case 
+    sensitivity when keys are listed, ie, via keys() or items() methods. Works
+    by storing a lowercase version of the key as the new key and stores the
+    original key-value pair as the key's value (values become dictionaries).
+    """
+
+    def __init__(self, initval={}):
+        if isinstance(initval, dict):
+            for key, value in initval.iteritems():
+                self.__setitem__(key, value)
+        elif isinstance(initval, list):
+            for (key, value) in initval:
+                self.__setitem__(key, value)
+            
+    def __contains__(self, key):
+        return dict.__contains__(self, key.lower())
+  
+    def __getitem__(self, key):
+        return dict.__getitem__(self, key.lower())['val'] 
+  
+    def __setitem__(self, key, value):
+        return dict.__setitem__(self, key.lower(), {'key': key, 'val': value})
+
+    def get(self, key, default=None):
+        try:
+            v = dict.__getitem__(self, key.lower())
+        except KeyError:
+            return default
+        else:
+            return v['val']
+
+    def has_key(self,key):
+        if self.get(key):
+            return True
+        else:
+            return False    
+
+    def items(self):
+        return [(v['key'], v['val']) for v in dict.itervalues(self)]
+    
+    def keys(self):
+        return [v['key'] for v in dict.itervalues(self)]
+    
+    def values(self):
+        return [v['val'] for v in dict.itervalues(self)]
+    
+    def iteritems(self):
+        for v in dict.itervalues(self):
+            yield v['key'], v['val']
+        
+    def iterkeys(self):
+        for v in dict.itervalues(self):
+            yield v['key']
+        
+    def itervalues(self):
+        for v in dict.itervalues(self):
+            yield v['val']
 
 
 class Storage(dict):
