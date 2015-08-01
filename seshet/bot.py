@@ -9,7 +9,7 @@ from collections import defaultdict
 
 from ircutils3 import bot, client
 
-from .utils import KVStore, Storage, CaselessDict
+from .utils import KVStore, Storage, CaselessDict, IRCstr
 
 
 # define our own because we do way more than the simplistic classes in protocol
@@ -19,11 +19,44 @@ class SeshetUser(object):
     used in sets and as keys of dictionaries.
     """
     
+    # IRC prefix:
+    # nick!user@host
+    
+    nickname = None
+    """First field of an IRC prefix."""
+    
+    username = None
+    """Second field of an IRC prefix."""
+    
+    host = None
+    """Third field of an IRC prefix."""
+    
+    realname = None
+    """Real name returned by WHOIS reply."""
+    
+    ns_accn = None
+    """NickServ account."""
+    
+    channels = set()
+    """List of channels this user has joined."""
+    
     def __init__(self, nickname):
-        self.nickname = nickname
+        self.nickname = IRCstr(nickname)
     
     def __hash__(self):
         return hash(self.nickname)
+        
+    def join(self, channel):
+        """Add this user to a channel's user list."""
+        
+        channel.users.add(self)
+        self.channels.add(channel)
+        
+    def part(self, channel):
+        """Remove this user from a channel's user list."""
+        
+        channel.users.remove(self)
+        self.channels.remove(channel)
 
 
 class SeshetChannel(object):
@@ -41,7 +74,16 @@ class SeshetChannel(object):
     """
     
     def __init__(self, name):
-        self.name = name
+        self.name = IRCstr(name)
+        
+    def __hash__(self):
+        return hash(self.name)
+        
+    def __contains__(self, user):
+        if isinstance(user, str):
+            user = SeshetUser(user)
+            
+        return user in self.users
 
 
 class SeshetBot(bot.SimpleBot):
