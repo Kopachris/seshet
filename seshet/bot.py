@@ -9,7 +9,7 @@ from datetime import datetime
 
 from ircutils3 import bot, client
 
-from .utils import KVStore, Storage, CaselessDict, IRCstr
+from .utils import KVStore, Storage, CaselessDictionary, IRCstr
 
 
 # define our own because we do way more than the simplistic classes in protocol
