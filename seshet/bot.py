@@ -102,10 +102,7 @@ class SeshetChannel(object):
         else:
             return self.name == other.name
         
-    def __contains__(self, user):
-        if isinstance(user, str):
-            user = SeshetUser(user)
-            
+    def __contains__(self, user):            
         return user in self.users
 
 
