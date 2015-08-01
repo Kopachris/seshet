@@ -40,11 +40,20 @@ class SeshetUser(object):
     channels = set()
     """List of channels this user has joined."""
     
+    usermode = None
+    """Usermode string for this user."""
+    
     def __init__(self, nickname):
         self.nickname = IRCstr(nickname)
     
     def __hash__(self):
         return hash(self.nickname)
+        
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.nickname == other
+        else:
+            return self.nickname == other.nickname
         
     def join(self, channel):
         """Add this user to a channel's user list."""
@@ -57,6 +66,14 @@ class SeshetUser(object):
         
         channel.users.remove(self)
         self.channels.remove(channel)
+        
+    def quit(self):
+        """Remove this user from all connected channels."""
+        
+        for chan in self.channels:
+            chan.users.remove(self)
+            
+        self.channels = set()
 
 
 class SeshetChannel(object):
@@ -78,6 +95,12 @@ class SeshetChannel(object):
         
     def __hash__(self):
         return hash(self.name)
+        
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.name == other
+        else:
+            return self.name == other.name
         
     def __contains__(self, user):
         if isinstance(user, str):
@@ -112,6 +135,9 @@ class SeshetBot(bot.SimpleBot):
     
     channels = CaselessDict()
     """List of channels the bot is listening in."""
+    
+    users = CaselessDict()
+    """List of all users the bot knows in this session."""
     
     def __init__(self, nick='Seshet', db=None):
         """Extend `ircutils3.bot.SimpleBot.__init__()`.
