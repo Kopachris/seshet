@@ -74,6 +74,24 @@ class SeshetUser(object):
             chan.users.remove(self)
             
         self.channels = set()
+        
+    def change_nick(self, new_nick):
+        """Update channels' user lists and return a new SeshetUser object with
+        the new nickname. Because hashable objects are supposed to be immutable
+        """
+        
+        new_user = SeshetUser(new_nick)
+        for p in ('username', 'host', 'realname', 'ns_accn',
+                  'channels', 'usermode',
+                  ):
+            v = getattr(self, p)
+            setattr(new_user, v)
+            
+        for chan in new_user.channels:
+            chan.users.remove(self)
+            chan.users.add(new_user)
+            
+        return new_user
 
 
 class SeshetChannel(object):
