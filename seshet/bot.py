@@ -132,10 +132,10 @@ class SeshetBot(bot.SimpleBot):
     locale = {}
     """Default values for text logging."""
     
-    channels = CaselessDict()
+    channels = CaselessDictionary()
     """List of channels the bot is listening in."""
     
-    users = CaselessDict()
+    users = CaselessDictionary()
     """List of all users the bot knows in this session."""
     
     def __init__(self, nick='Seshet', db=None):
