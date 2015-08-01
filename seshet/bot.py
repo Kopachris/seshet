@@ -3,9 +3,9 @@
 import os
 import sys
 import traceback
+import re
 from io import StringIO
 from datetime import datetime
-from collections import defaultdict
 
 from ircutils3 import bot, client
 
@@ -19,17 +19,14 @@ class SeshetUser(object):
     used in sets and as keys of dictionaries.
     """
     
-    # IRC prefix:
-    # nick!user@host
-    
     nickname = None
-    """First field of an IRC prefix."""
+    """First field of a hostmask."""
     
     username = None
-    """Second field of an IRC prefix."""
+    """Second field of a hostmask."""
     
     host = None
-    """Third field of an IRC prefix."""
+    """Third field of a hostmask."""
     
     realname = None
     """Real name returned by WHOIS reply."""
@@ -43,11 +40,16 @@ class SeshetUser(object):
     usermode = None
     """Usermode string for this user."""
     
-    def __init__(self, nickname):
-        self.nickname = IRCstr(nickname)
+    def __init__(self, hostmask):
+        nick, user, host = re.split(r'!|@', hostmask)
+        self.nickname = IRCstr(nick)
+        self.username = user
+        self.host = host
+        self.hostmask = hostmask
     
     def __hash__(self):
-        return hash(self.nickname)
+        userhost = "{}@{}".format(self.username, self.host)
+        return hash(userhost)
         
     def __eq__(self, other):
         if isinstance(other, str):
@@ -74,24 +76,6 @@ class SeshetUser(object):
             chan.users.remove(self)
             
         self.channels = set()
-        
-    def change_nick(self, new_nick):
-        """Update channels' user lists and return a new SeshetUser object with
-        the new nickname. Because hashable objects are supposed to be immutable
-        """
-        
-        new_user = SeshetUser(new_nick)
-        for p in ('username', 'host', 'realname', 'ns_accn',
-                  'channels', 'usermode',
-                  ):
-            v = getattr(self, p)
-            setattr(new_user, v)
-            
-        for chan in new_user.channels:
-            chan.users.remove(self)
-            chan.users.add(new_user)
-            
-        return new_user
 
 
 class SeshetChannel(object):
