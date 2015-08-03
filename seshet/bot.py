@@ -13,7 +13,8 @@ from ircutils3 import bot, client
 from .utils import KVStore, Storage, CaselessDictionary, IRCstr
 
 
-SeshetUser = namedtuple('SeshetUser', ['nick', 'user', 'real', 'host'])
+# TODO: replace with actual classes again
+SeshetUser = namedtuple('SeshetUser', ['nick', 'user', 'host'])
 SeshetChannel = namedtuple('SeshetChannel', ['name', 'users'])
 
 
@@ -100,6 +101,21 @@ class SeshetBot(bot.SimpleBot):
     def run_modules(self, e):
         pass
     
+    def get_unique_users(self, chan):
+        """Get the set of users that are unique to the given channel (i.e. not
+        present in any other channel the bot is in).
+        """
+        
+        chan = IRCstr(chan)
+        
+        these_users = self.channels[chan].users
+        other_users = set()
+        for c in self.channels.values():
+            if c.name != chan:
+                other_users |= c.users
+        
+        return these_users - other_users
+    
     def on_message(self, e):
         self.log('privmsg',
                  source=e.source,
@@ -116,8 +132,11 @@ class SeshetBot(bot.SimpleBot):
                  )
                  
         chan = IRCstr(e.target)
-        if e.source == self.nickname:
-            self.channels[chan] = SeshetChannel(chan
+        nick = IRCstr(e.source)
+        if e.source != self.nickname:
+            self.channels[chan].users.add(nick)
+            if nick not in self.users:
+                self.users[nick] = SeshetUser(nick, e.user, e.host)
                  
         self.run_modules(e)
     
@@ -128,16 +147,32 @@ class SeshetBot(bot.SimpleBot):
                  msg=' '.join(e.params[1:]),
                  target=e.target,
                  )
+        
+        chan = IRCstr(e.target)
+        nick = IRCstr(e.source)
+        if e.source == self.nickname:
+            old_users = self.get_unique_users(chan)
+            del self.channels[chan]
+            for u in self.users.keys():
+                if u in old_users:
+                    del self.users[u]
+        else:
+            if nick in self.get_unique_users(chan):
+                del self.users[nick]
+            self.channels[chan].users.remove(nick)
     
     def on_quit(self, e):
+        nick = IRCstr(e.source)
         for chan in self.channels.values():
-            if e.source in chan.user_list:
+            if nick in chan.users:
                 self.log('quit',
                          source=e.source,
                          hostmask=e.user+'@'+e.host,
                          msg=' '.join(e.params),
                          target=chan.name,
                          )
+                chan.users.remove(nick)
+        del self.users[nick]
     
     def on_disconnect(self, e):
         pass
@@ -150,6 +185,9 @@ class SeshetBot(bot.SimpleBot):
                  msg=' '.join(e.params[1:]),
                  hostmask=e.user+'@'+e.host,
                  )
+        
+        chan = IRCstr(e.target)
+        nick = IRCstr(e.source)
     
     def on_nick_change(self, e):
         for chan in self.channels.values():
