@@ -114,6 +114,11 @@ class SeshetBot(bot.SimpleBot):
                  target=e.target,
                  hostmask=e.user+'@'+e.host,
                  )
+                 
+        chan = IRCstr(e.target)
+        if e.source == self.nickname:
+            self.channels[chan] = SeshetChannel(chan
+                 
         self.run_modules(e)
     
     def on_part(self, e):
@@ -208,10 +213,14 @@ class SeshetBot(bot.SimpleBot):
         self._loop(self.conn._map)
         
     def _add_channel_names(self, e):
-        pass
-    
-    def _remove_user(self, e):
-        pass
+        """Add a new channel to self.channels and initialize its user list.
+        
+        Called as event handler for RPL_NAMES events. Do not call directly.
+        """
+        
+        chan = IRCstr(e.channel)
+        names = set([IRCstr(n) for n in e.name_list])
+        self.channels[chan] = SeshetChannel(chan, names)
     
     def _log_to_file(self, etype, source, msg='', target='', hostmask='', params=''):
         """Override `log()` if bot is not initialized with a database
