@@ -12,6 +12,7 @@ import random
 import inspect
 import pickle
 import string
+from collections import UserString
 
 from pydal import Field
 
@@ -22,7 +23,7 @@ upper_to_lower = str.maketrans(irc_uppercase, irc_lowercase)
 lower_to_upper = str.maketrans(irc_lowercase, irc_uppercase)
 
 
-class IRCstr(str):
+class IRCstr(UserString):
     """Implement str, overriding case-changing methods to only handle ASCII
     cases plus "{}|^" and "[]\~" as defined by RFC 2812.
     

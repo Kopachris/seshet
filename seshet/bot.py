@@ -130,18 +130,13 @@ class SeshetBot(bot.SimpleBot):
         # define defaults
         
         self.session = Storage()
-        """Shared runtime storage available for all command modules."""
         
         self.log_file = 'seshet.log'
         self.log_formats = {}
         self.locale = {}
-        """Default values for text logging."""
         
         self.channels = CaselessDictionary()
-        """List of channels the bot is listening in."""
-        
         self.users = CaselessDictionary()
-        """List of all users the bot knows in this session."""
         
         if db is None:
             # no database connection, only log to file and run
