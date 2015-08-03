@@ -36,25 +36,26 @@ class IRCstr(UserString):
         return self.lower()
         
     def lower(self):
-        return self.translate(upper_to_lower)
+        return self.data.translate(upper_to_lower)
     
     def upper(self):
-        return self.translate(lower_to_upper)
+        return self.data.translate(lower_to_upper)
     
     def islower(self):
-        return str(self) == str(self.lower())
+        return self.data == self.data.lower()
     
     def isupper(self):
-        return str(self) == str(self.upper())
+        return self.data == self.data.upper()
     
     def __hash__(self):
-        return hash(self.lower())
+        return hash(self.data.lower())
         
     def __eq__(self, other):
         if isinstance(other, IRCstr):
-            return str(self.lower()) == str(other.lower())
+            return self.data.lower() == other.lower()
         elif isinstance(other, str):
-            return str(self.lower()) == other.translate(upper_to_lower)
+            # Use our custom lowercasing for IRC on other
+            return self.data.lower() == other.translate(upper_to_lower)
         else:
             raise TypeError("Could not compare {} and {}".format(self, other))
 
@@ -241,8 +242,8 @@ class KVStore:
         
     Or like a dict:
     
-        >>> store[spam] = 'eggs'
-        >>> store[spam]
+        >>> store['spam'] = 'eggs'
+        >>> store['spam']
         'eggs'
         
     The KVStore object uses `inspect` to determine which module

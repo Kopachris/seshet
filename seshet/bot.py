@@ -6,106 +6,15 @@ import traceback
 import re
 from io import StringIO
 from datetime import datetime
+from collections import namedtuple
 
 from ircutils3 import bot, client
 
 from .utils import KVStore, Storage, CaselessDictionary, IRCstr
 
 
-# define our own because we do way more than the simplistic classes in protocol
-
-class SeshetUser(object):
-    """Represent an individual user. Users are hashable by nickname, so can be
-    used in sets and as keys of dictionaries.
-    """
-    
-    nickname = None
-    """First field of a hostmask."""
-    
-    username = None
-    """Second field of a hostmask."""
-    
-    host = None
-    """Third field of a hostmask."""
-    
-    realname = None
-    """Real name returned by WHOIS reply."""
-    
-    ns_accn = None
-    """NickServ account."""
-    
-    channels = set()
-    """List of channels this user has joined."""
-    
-    usermode = None
-    """Usermode string for this user."""
-    
-    def __init__(self, hostmask):
-        nick, user, host = re.split(r'!|@', hostmask)
-        self.nickname = IRCstr(nick)
-        self.username = user
-        self.host = host
-        self.hostmask = hostmask
-    
-    def __hash__(self):
-        userhost = "{}@{}".format(self.username, self.host)
-        return hash(userhost)
-        
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return self.nickname == other
-        else:
-            return self.nickname == other.nickname
-        
-    def join(self, channel):
-        """Add this user to a channel's user list."""
-        
-        channel.users.add(self)
-        self.channels.add(channel)
-        
-    def part(self, channel):
-        """Remove this user from a channel's user list."""
-        
-        channel.users.remove(self)
-        self.channels.remove(channel)
-        
-    def quit(self):
-        """Remove this user from all connected channels."""
-        
-        for chan in self.channels:
-            chan.users.remove(self)
-            
-        self.channels = set()
-
-
-class SeshetChannel(object):
-    """Represent an IRC channel. User membership in a channel can be tested by
-    nickname:
-    
-    >>> bot.join('#botwar')
-    >>> bot.nickname in bot.channels['#botwar']
-    True
-    """
-    
-    users = set()
-    """Set of SeshetUser objects representing the list of users in the
-    channel.
-    """
-    
-    def __init__(self, name):
-        self.name = IRCstr(name)
-        
-    def __hash__(self):
-        return hash(self.name)
-        
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return self.name == other
-        else:
-            return self.name == other.name
-        
-    def __contains__(self, user):            
-        return user in self.users
+SeshetUser = namedtuple('SeshetUser', ['nick', 'user', 'real', 'host'])
+SeshetChannel = namedtuple('SeshetChannel', ['name', 'users'])
 
 
 class SeshetBot(bot.SimpleBot):
