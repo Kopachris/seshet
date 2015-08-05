@@ -25,9 +25,9 @@ class SeshetUser(object):
 class SeshetChannel(object):
     """Represent one IRC channel."""
     
-    def __init__(self, name):
-        self.name = name
-        self.users = set()
+    def __init__(self, name, users):
+        self.name = IRCstr(name)
+        self.users = users
 
 
 class SeshetBot(bot.SimpleBot):
