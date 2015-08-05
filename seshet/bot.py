@@ -10,7 +10,7 @@ from collections import namedtuple
 
 from ircutils3 import bot, client
 
-from .utils import KVStore, Storage, CaselessDictionary, IRCstr
+from .utils import KVStore, Storage, IRCstr
 
 
 class SeshetUser(object):
@@ -128,8 +128,8 @@ class SeshetBot(bot.SimpleBot):
         self.log_formats = {}
         self.locale = {}
         
-        self.channels = CaselessDictionary()
-        self.users = CaselessDictionary()
+        self.channels = {}
+        self.users = {}
         
         if db is None:
             # no database connection, only log to file and run
