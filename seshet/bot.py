@@ -70,9 +70,28 @@ class SeshetUser(object):
 class SeshetChannel(object):
     """Represent one IRC channel."""
     
-    def __init__(self, name, users):
+    def __init__(self, name, users, log_size=100):
         self.name = IRCstr(name)
         self.users = users
+        self.message_log = []
+        self._log_size = log_size
+        
+    def log_message(self, time, user, message):
+        """Log a channel message.
+        
+        This log acts as a sort of cache so that recent activity can be searched
+        by the bot and command modules without querying the database.
+        """
+        
+        if isinstance(user, SeshetUser):
+            user = user.nick
+        elif not isinstance(user, IRCstr):
+            user = IRCstr(user)
+            
+        self.message_log.append((time, user, message))
+        
+        while len(self.message_log) > self._log_size:
+            del self.message_log[0]
         
     def __str__(self):
         return str(self.name)
