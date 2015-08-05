@@ -40,20 +40,20 @@ class IRCstr(UserString):
         return self.data.translate(lower_to_upper)
     
     def islower(self):
-        return self.data == self.data.lower()
+        return self.data == self.lower()
     
     def isupper(self):
-        return self.data == self.data.upper()
+        return self.data == self.upper()
     
     def __hash__(self):
-        return hash(self.data.lower())
+        return hash(self.lower())
         
     def __eq__(self, other):
         if isinstance(other, IRCstr):
-            return self.data.lower() == other.lower()
+            return self.lower() == other.lower()
         elif isinstance(other, str):
             # Use our custom lowercasing for IRC on other
-            return self.data.lower() == other.translate(upper_to_lower)
+            return self.lower() == other.translate(upper_to_lower)
         else:
             raise TypeError("Could not compare {} and {}".format(self, other))
 
