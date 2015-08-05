@@ -13,9 +13,21 @@ from ircutils3 import bot, client
 from .utils import KVStore, Storage, CaselessDictionary, IRCstr
 
 
-# TODO: replace with actual classes again
-SeshetUser = namedtuple('SeshetUser', ['nick', 'user', 'host'])
-SeshetChannel = namedtuple('SeshetChannel', ['name', 'users'])
+class SeshetUser(object):
+    """Represent one IRC user."""
+    
+    def __init__(self, nick, user, host):
+        self.nick = IRCstr(nick)
+        self.user = user
+        self.host = host
+        
+        
+class SeshetChannel(object):
+    """Represent one IRC channel."""
+    
+    def __init__(self, name):
+        self.name = name
+        self.users = set()
 
 
 class SeshetBot(bot.SimpleBot):
