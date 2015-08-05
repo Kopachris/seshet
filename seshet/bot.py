@@ -20,6 +20,51 @@ class SeshetUser(object):
         self.nick = IRCstr(nick)
         self.user = user
         self.host = host
+        self.channels = []
+        
+    def join(self, channel):
+        """Add this user to the channel's user list and add the channel to this
+        user's list of joined channels.
+        """
+        
+        if channel not in self.channels:
+            channel.users.add(self.nick)
+            self.channels.append(channel)
+    
+    def part(self, channel):
+        """Remove this user from the channel's user list and remove the channel
+        from this user's list of joined channels.
+        """
+        
+        if channel in self.channels:
+            channel.users.remove(self.nick)
+            self.channels.remove(channel)
+            
+    def quit(self):
+        """Remove this user from all channels and reinitialize the user's list
+        of joined channels.
+        """
+        
+        for c in self.channels:
+            c.users.remove(self.nick)
+        self.channels = []
+        
+    def change_nick(self, nick):
+        """Update this user's nick in all joined channels."""
+        
+        old_nick = self.nick
+        self.nick = IRCstr(nick)
+        
+        for c in self.channels:
+            c.users.remove(old_nick)
+            c.users.add(self.nick)
+            
+    def __str__(self):
+        return "{}!{}@{}".format(self.nick, self.user, self.host)
+        
+    def __repr__(self):
+        temp = "<SeshetUser {}!{}@{} in channels {}>"
+        return temp.format(self.nick, self,user, self.host, self.channels)
         
         
 class SeshetChannel(object):
@@ -28,6 +73,13 @@ class SeshetChannel(object):
     def __init__(self, name, users):
         self.name = IRCstr(name)
         self.users = users
+        
+    def __str__(self):
+        return str(self.name)
+        
+    def __repr__(self):
+        temp = "<SeshetChannel {} with users {}>"
+        return temp.format(self.name, list(self.users))
 
 
 class SeshetBot(bot.SimpleBot):
