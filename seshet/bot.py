@@ -6,7 +6,6 @@ import traceback
 import re
 from io import StringIO
 from datetime import datetime
-from collections import namedtuple
 
 from ircutils3 import bot, client
 
@@ -76,7 +75,7 @@ class SeshetChannel(object):
         self.message_log = []
         self._log_size = log_size
         
-    def log_message(self, time, user, message):
+    def log_message(self, user, message):
         """Log a channel message.
         
         This log acts as a sort of cache so that recent activity can be searched
@@ -87,6 +86,8 @@ class SeshetChannel(object):
             user = user.nick
         elif not isinstance(user, IRCstr):
             user = IRCstr(user)
+
+        time = datetime.utcnow()
             
         self.message_log.append((time, user, message))
         
@@ -205,6 +206,8 @@ class SeshetBot(bot.SimpleBot):
                  msg=e.message,
                  target=e.target,
                  )
+        if e.target in self.channels:
+            self.channels[e.target].log_message(e.source, e.message)
         self.run_modules(e)
     
     def on_join(self, e):

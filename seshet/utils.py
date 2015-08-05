@@ -13,6 +13,7 @@ from collections import UserString
 
 from pydal import Field
 
+# TODO: IRCstr should go in next version of ircutils3.protocol
 
 irc_uppercase = string.ascii_uppercase + "[]\~"
 irc_lowercase = string.ascii_lowercase + "{}|^"
