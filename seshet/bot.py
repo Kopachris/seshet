@@ -64,7 +64,7 @@ class SeshetUser(object):
         
     def __repr__(self):
         temp = "<SeshetUser {}!{}@{} in channels {}>"
-        return temp.format(self.nick, self,user, self.host, self.channels)
+        return temp.format(self.nick, self.user, self.host, self.channels)
         
         
 class SeshetChannel(object):
