@@ -98,8 +98,8 @@ class SeshetChannel(object):
         return str(self.name)
         
     def __repr__(self):
-        temp = "<SeshetChannel {} with users {}>"
-        return temp.format(self.name, list(self.users))
+        temp = "<SeshetChannel {} with {} users>"
+        return temp.format(self.name, len(self.users))
 
 
 class SeshetBot(bot.SimpleBot):
@@ -207,6 +207,7 @@ class SeshetBot(bot.SimpleBot):
                  target=e.target,
                  )
         if e.target in self.channels:
+            # TODO: move this to self.log() so we don't have to get time twice?
             self.channels[e.target].log_message(e.source, e.message)
         self.run_modules(e)
     

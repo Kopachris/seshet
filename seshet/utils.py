@@ -55,7 +55,7 @@ class IRCstr(UserString):
             # Use our custom lowercasing for IRC on other
             return self.lower() == other.translate(upper_to_lower)
         else:
-            raise TypeError("Could not compare {} and {}".format(self, other))
+            return False
 
 
 class Storage(dict):
