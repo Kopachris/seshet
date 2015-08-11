@@ -1,9 +1,6 @@
 """Implement SeshetBot as subclass of ircutils3.bot.SimpleBot."""
 
-import os
-import sys
-import traceback
-import re
+
 from io import StringIO
 from datetime import datetime
 
