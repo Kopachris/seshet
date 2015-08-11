@@ -221,9 +221,9 @@ class SeshetBot(bot.SimpleBot):
         chan = IRCstr(e.target)
         nick = IRCstr(e.source)
         if e.source != self.nickname:
-            self.channels[chan].users.add(nick)
             if nick not in self.users:
                 self.users[nick] = SeshetUser(nick, e.user, e.host)
+            self.users[nick].join(self.channels[chan])
                  
         self.run_modules(e)
     
@@ -237,19 +237,22 @@ class SeshetBot(bot.SimpleBot):
         
         chan = IRCstr(e.target)
         nick = IRCstr(e.source)
-        if e.source == self.nickname:
-            old_users = self.get_unique_users(chan)
-            del self.channels[chan]
-            for u in self.users.keys():
-                if u in old_users:
-                    del self.users[u]
-        else:
-            if nick in self.get_unique_users(chan):
-                del self.users[nick]
-            self.channels[chan].users.remove(nick)
+        channel = self.channels[chan]
+        user = self.users[nick]
+        
+        user.part(channel)
+        if nick == self.nickname:
+            # bot parted, remove that channel from all users and
+            # remove any users with empty channel lists
+            for u in self.users.values():
+                if channel in u.channels:
+                    u.channels.remove(channel)
+                if len(u.channels) == 0:
+                    del self.users[u.nick]
     
     def on_quit(self, e):
         nick = IRCstr(e.source)
+        
         for chan in self.channels.values():
             if nick in chan.users:
                 self.log('quit',
@@ -258,7 +261,8 @@ class SeshetBot(bot.SimpleBot):
                          msg=' '.join(e.params),
                          target=chan.name,
                          )
-                chan.users.remove(nick)
+                         
+        users[nick].quit()
         del self.users[nick]
     
     def on_disconnect(self, e):
@@ -275,8 +279,23 @@ class SeshetBot(bot.SimpleBot):
         
         chan = IRCstr(e.target)
         nick = IRCstr(e.source)
+        channel = self.channels[chan]
+        user = self.users[nick]
+        
+        user.part(channel)
+        if nick == self.nickname:
+            # bot parted, remove that channel from all users and
+            # remove any users with empty channel lists
+            for u in self.users.values():
+                if channel in u.channels:
+                    u.channels.remove(channel)
+                if len(u.channels) == 0:
+                    del self.users[u.nick]
     
     def on_nick_change(self, e):
+        new_nick = IRCstr(e.target)
+        old_nick = IRCstr(e.source)
+        
         for chan in self.channels.values():
             if e.source in chan.user_list:
                 self.log('nick',
@@ -285,6 +304,10 @@ class SeshetBot(bot.SimpleBot):
                          target=chan.name,
                          params=e.target,
                          )
+        
+        self.users[old_nick].change_nick(new_nick)
+        self.users[new_nick] = self.users[old_nick]
+        del self.users[old_nick]
     
     def on_ctcp_action(self, e):
         self.log('action',
