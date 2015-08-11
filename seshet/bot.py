@@ -1,6 +1,6 @@
 """Implement SeshetBot as subclass of ircutils3.bot.SimpleBot."""
 
-
+import logging
 from io import StringIO
 from datetime import datetime
 
@@ -109,13 +109,20 @@ class SeshetBot(bot.SimpleBot):
     `seshet --config` or `seshet --new` commands.
     """
     
-    def __init__(self, nick='Seshet', db=None):
+    def __init__(self, nick='Seshet', db=None, debug_file=None, verbosity=99):
         """Extend `ircutils3.bot.SimpleBot.__init__()`.
         
         Keyword argument `db` is required for running commands other
         than core commands and should be an instance of pydal.DAL.
         """
         
+        # initialize debug logging
+        if debug_file=None:
+            logging.basicConfig(level=verbosity)
+        else:
+            logging.basicConfig(filename=debug_file, level=verbosity)
+        
+        logging.info("Running `SimpleBot.__init__`")
         bot.SimpleBot.__init__(self, nick, auto_handle=False)
         
         # define defaults
@@ -132,16 +139,19 @@ class SeshetBot(bot.SimpleBot):
         if db is None:
             # no database connection, only log to file and run
             # core command modules
+            logging.info("No db, IRC logging will be done to file")
             self.log = self._log_to_file
             self.run_modules = self._run_only_core
             
             # dummy KV store since no db
             self.storage = Storage()
         else:
+            logging.info("Using database %s", db)
             self.db = db
             self.storage = KVStore(db)
         
         # Add default handlers
+        logging.debug("Adding default handlers...")
         self.events["any"].add_handler(client._update_client_info)
         self.events["ctcp_version"].add_handler(client._reply_to_ctcp_version)
         self.events["name_reply"].add_handler(self._add_channel_names)

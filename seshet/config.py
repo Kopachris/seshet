@@ -173,11 +173,17 @@ def build_bot(config_file=None):
     else:
         config.read(config_file)
 
+    verbosity = config['debug']['verbosity'].lower()
+    seshetbot.log_verbosity = int(debug_lvls[verbosity])
+    seshetbot.debug_file = config['debug']['file']
+    
     # shorter names
     db_conf = config['database']
     conn_conf = config['connection']
     client_conf = config['client']
     log_conf = config['logging']
+    verbosity = config['debug']['verbosity'].lower() or 'notset'
+    debug_file = config['debug']['file'] or None
     # add more as they're used
 
     if db_conf.getboolean('use_db'):
@@ -189,8 +195,18 @@ def build_bot(config_file=None):
         db = None
         log_file = log_conf.pop('file')
         log_fmts = dict(log_conf)
-
-    seshetbot = bot.SeshetBot(client_conf['nickname'], db)
+        
+    # debug logging
+    debug_lvls = {'notset': 0,
+                  'debug': 10,
+                  'info': 20,
+                  'warning': 30,
+                  'error': 40,
+                  'critical': 50,
+                  }
+    lvl = int(debug_lvls[verbosity])
+    
+    seshetbot = bot.SeshetBot(client_conf['nickname'], db, debug_file, lvl)
 
     # connection info for connect()
     seshetbot.default_host = conn_conf['server']
@@ -206,5 +222,5 @@ def build_bot(config_file=None):
     seshetbot.log_file = log_file
     seshetbot.log_formats = log_fmts
     seshetbot.locale = dict(config['locale'])
-
+    
     return seshetbot
