@@ -13,6 +13,7 @@ class SeshetUser(object):
     """Represent one IRC user."""
     
     def __init__(self, nick, user, host):
+        logging.debug("Building new SeshetUser, %s", nick)
         self.nick = IRCstr(nick)
         self.user = user
         self.host = host
@@ -122,7 +123,7 @@ class SeshetBot(bot.SimpleBot):
         else:
             logging.basicConfig(filename=debug_file, level=verbosity)
         
-        logging.info("Running `SimpleBot.__init__`")
+        logging.debug("Running `SimpleBot.__init__`...")
         bot.SimpleBot.__init__(self, nick, auto_handle=False)
         
         # define defaults
@@ -190,7 +191,16 @@ class SeshetBot(bot.SimpleBot):
         self.db.commit()
         
     def run_modules(self, e):
-        pass
+        # grab local pointer to self.db for faster lookup
+        db = self.db
+        
+        # get initial list of modules handling this event type
+        event_types = db.modules.event_types
+        init_mods = db(event_types.contains(e.command).select()
+        
+        logging.debug(("Running modules for {} command. "
+                       "Initial module list:\n{}").format(e.command, init_mods)
+                      )
     
     def get_unique_users(self, chan):
         """Get the set of users that are unique to the given channel (i.e. not
@@ -362,9 +372,15 @@ class SeshetBot(bot.SimpleBot):
         if defaults['host'] is None:
             raise TypeError("missing 1 required positional argument: 'host'")
 
+        logging.info("Connecting to %s:%s and joining channels %s",
+                     defaults['host'],
+                     defaults['port'],
+                     defaults['channel'],
+                     )
         client.SimpleClient.connect(self, **defaults)
 
     def start(self):
+        logging.debug("Beginning poll loop")
         self._loop(self.conn._map)
         
     def _add_channel_names(self, e):
