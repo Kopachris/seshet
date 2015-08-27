@@ -196,11 +196,68 @@ class SeshetBot(bot.SimpleBot):
         
         # get initial list of modules handling this event type
         event_types = db.modules.event_types
-        init_mods = db(event_types.contains(e.command)).select()
+        mod_enabled = db.modules.enabled
+        init_mods = db(event_types.contains(e.command) & mod_enabled).select()
         
         logging.debug(("Running modules for {} command. "
                        "Initial module list:\n{}").format(e.command, init_mods)
                       )
+        
+        if e.command in ('PRIVMSG', 'CTCP_ACTION'):
+            # lowercase for non-caps comparisons
+            m_low = e.message.lower()
+            bot_n = self.nickname.lower()
+            bot_u = self.user.lower()
+            bot_r = self.real_name.lower()
+            
+            # indicates whether or not name has already been stripped from
+            # original message
+            for_us = False
+            
+            if e.target.startswith('#'):
+                chan_msg = True
+                chan_nicks = self.channels[e.target].users
+            else:
+                chan_msg = False
+            
+            fin_mods = list()  # final list of modules to run
+            for mod in init_mods:
+                if e.source in mod.whitelist:
+                    fin_mods.append(mod)
+                
+                elif e.source in mod.blacklist:
+                    pass
+                
+                if self.nickname in mod.enicks:                    
+                    if e.target == self.nickname or for_us:
+                        fin_mods.append(mod)
+                    elif m_low.startswith(bot_n):
+                        # strip nickname from original message so modules can
+                        # process it correctly
+                        e.message = e.message[len(bot_n):].lstrip(',: ')
+                        
+                        fin_mods.append(mod)
+                        for_us = True
+                    elif m_low.startswith(bot_u):
+                        e.message = e.message[len(bot_u):].lstrip(',: ')
+                        
+                        fin_mods.append(mod)
+                        for_us = True
+                    elif m_low.startswith(bot_r):
+                        e.message = e.message[len(bot_r):].lstrip(',: ')
+                        
+                        fin_mods.append(mod)
+                        for_us = True
+                
+                if chan_msg:
+                    if e.target in mod.dchannels:
+                        pass
+                    elif set(mod.dnicks) & chan_nicks:
+                        pass
+                    elif e.target in mod.echannels:
+                        fin_mods.append(mod)
+                    elif set(mod.enicks) & chan_nicks:
+                        fin_mods.append(mod)
     
     def get_unique_users(self, chan):
         """Get the set of users that are unique to the given channel (i.e. not
