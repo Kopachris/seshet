@@ -196,7 +196,7 @@ class SeshetBot(bot.SimpleBot):
         
         # get initial list of modules handling this event type
         event_types = db.modules.event_types
-        init_mods = db(event_types.contains(e.command).select()
+        init_mods = db(event_types.contains(e.command)).select()
         
         logging.debug(("Running modules for {} command. "
                        "Initial module list:\n{}").format(e.command, init_mods)
