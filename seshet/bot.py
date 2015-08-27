@@ -203,7 +203,7 @@ class SeshetBot(bot.SimpleBot):
                        "Initial module list:\n{}").format(e.command, init_mods)
                       )
         
-        if e.command in ('PRIVMSG', 'CTCP_ACTION'):
+        if e.command in ('PRIVMSG', 'CTCP_ACTION', 'NOTICE'):
             # lowercase for non-caps comparisons
             m_low = e.message.lower()
             bot_n = self.nickname.lower()
