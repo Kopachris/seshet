@@ -147,7 +147,7 @@ def build_db_tables(db):
                     Field('dnicks', 'list:string'),
                     Field('whitelist', 'list:string'),
                     Field('blacklist', 'list:string'),
-                    Field('cmd_prefix', length=1, default='!'),
+                    Field('cmd_prefix', length=1, default='!', notnull=True),
                     Field('acl', 'json'),
                     Field('rate_limit', 'json'),
                     )

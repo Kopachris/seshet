@@ -204,6 +204,8 @@ class SeshetBot(bot.SimpleBot):
                       )
         
         if e.command in ('PRIVMSG', 'CTCP_ACTION', 'NOTICE'):
+            # narrow down list of modules to run based on event parameters
+            
             # lowercase for non-caps comparisons
             m_low = e.message.lower()
             bot_n = self.nickname.lower()
@@ -258,6 +260,18 @@ class SeshetBot(bot.SimpleBot):
                         fin_mods.append(mod)
                     elif set(mod.enicks) & chan_nicks:
                         fin_mods.append(mod)
+                        
+            argv = m_low.split()
+            for mod in fin_mods:
+                # run each module
+                m = __import__(mod.name)  # TODO: use importlib
+                
+                # TODO: add authentication and rate limiting
+                
+                for cmd, fun in m.commands.items():
+                    if (mod.cmd_prefix + cmd) == argv[0]:
+                        fun(self, e)
+                        break
     
     def get_unique_users(self, chan):
         """Get the set of users that are unique to the given channel (i.e. not
