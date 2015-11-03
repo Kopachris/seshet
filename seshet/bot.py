@@ -1,6 +1,7 @@
 """Implement SeshetBot as subclass of ircutils3.bot.SimpleBot."""
 
 import logging
+import os
 from io import StringIO
 from datetime import datetime
 
@@ -118,7 +119,7 @@ class SeshetBot(bot.SimpleBot):
         """
         
         # initialize debug logging
-        if debug_file=None:
+        if debug_file is None:
             logging.basicConfig(level=verbosity)
         else:
             logging.basicConfig(filename=debug_file, level=verbosity)
@@ -350,7 +351,7 @@ class SeshetBot(bot.SimpleBot):
                          target=chan.name,
                          )
                          
-        users[nick].quit()
+        self.users[nick].quit()
         del self.users[nick]
     
     def on_disconnect(self, e):
