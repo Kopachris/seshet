@@ -172,10 +172,6 @@ def build_bot(config_file=None):
         config = config_file
     else:
         config.read(config_file)
-
-    verbosity = config['debug']['verbosity'].lower()
-    seshetbot.log_verbosity = int(debug_lvls[verbosity])
-    seshetbot.debug_file = config['debug']['file']
     
     # shorter names
     db_conf = config['database']

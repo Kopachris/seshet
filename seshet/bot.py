@@ -122,7 +122,9 @@ class SeshetBot(bot.SimpleBot):
         if debug_file is None:
             logging.basicConfig(level=verbosity)
         else:
-            logging.basicConfig(filename=debug_file, level=verbosity)
+            logging.basicConfig(filename=os.path.expanduser(debug_file),
+                                level=verbosity
+                                )
         
         logging.debug("Running `SimpleBot.__init__`...")
         bot.SimpleBot.__init__(self, nick, auto_handle=False)
@@ -156,7 +158,7 @@ class SeshetBot(bot.SimpleBot):
         logging.debug("Adding default handlers...")
         self.events["any"].add_handler(client._update_client_info)
         self.events["ctcp_version"].add_handler(client._reply_to_ctcp_version)
-        self.events["name_reply"].add_handler(self._add_channel_names)
+        self.events["name_reply"].add_handler(_add_channel_names)
         
     def log(self, etype, source, msg='', target='', hostmask='', params=''):
         """Log an event in the database.
@@ -454,16 +456,6 @@ class SeshetBot(bot.SimpleBot):
     def start(self):
         logging.debug("Beginning poll loop")
         self._loop(self.conn._map)
-        
-    def _add_channel_names(self, e):
-        """Add a new channel to self.channels and initialize its user list.
-        
-        Called as event handler for RPL_NAMES events. Do not call directly.
-        """
-        
-        chan = IRCstr(e.channel)
-        names = set([IRCstr(n) for n in e.name_list])
-        self.channels[chan] = SeshetChannel(chan, names)
     
     def _log_to_file(self, etype, source, msg='', target='', hostmask='', params=''):
         """Override `log()` if bot is not initialized with a database
@@ -520,3 +512,14 @@ class SeshetBot(bot.SimpleBot):
             self.before_poll()
             poll(timeout=30.0, map=map)
             self.after_poll()
+
+
+def _add_channel_names(client, e):
+        """Add a new channel to self.channels and initialize its user list.
+
+        Called as event handler for RPL_NAMES events. Do not call directly.
+        """
+
+        chan = IRCstr(e.channel)
+        names = set([IRCstr(n) for n in e.name_list])
+        client.channels[chan] = SeshetChannel(chan, names)
